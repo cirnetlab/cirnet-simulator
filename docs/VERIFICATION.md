@@ -1,6 +1,6 @@
 # Simulator verification
 
-Current repository identity is [CIRNETLAB/CIRNET-Simulator](https://github.com/CIRNETLAB/CIRNET-Simulator); local `net-Circuit-*` directory names and dated extraction/provenance records remain valid. Current-source CI requires the reviewed renamed Contracts wheel URL and SHA256. Keep immutable v0.1.1 source/tag/artifact provenance separate from candidates rebuilt after documentation or package metadata changes. Pass `-B` explicitly to isolated Python tests because `-I` ignores the environment's bytecode setting.
+Current repository identity is [CIRNETLAB/CIRNET-Simulator](https://github.com/CIRNETLAB/CIRNET-Simulator); local `net-Circuit-*` directory names and dated extraction/provenance records remain valid. Current-source CI builds the renamed Contracts wheel from the exact Git commit and SHA256 source archive in `integration/ci-source-dependencies.json`. Keep immutable v0.1.1 source/tag/artifact provenance separate from candidates rebuilt after documentation or package metadata changes. Pass `-B` explicitly to isolated Python tests because `-I` ignores the environment's bytecode setting.
 
 Select the exact `cirnet-contracts==0.1.1` and DEV 1.0.0a1 wheel artifacts by SHA256 in a fresh environment. scripts/bootstrap_contract_tools.py, artifact_download.py, contracts_artifact.py and allocator adapters originate from Remote revision 25d2e6784035f6a8165142f8a8e03c4534512bcc. The canonical allocator implementation belongs exclusively to the installed DEV artifact; these adapters validate and delegate to it.
 

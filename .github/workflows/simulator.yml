@@ -9,8 +9,6 @@ env:
   PYTHONDONTWRITEBYTECODE: '1'
   NETCIRCUIT_CONTRACTS_DEV_WHEEL_URL: ${{ vars.NETCIRCUIT_CONTRACTS_DEV_WHEEL_URL }}
   NETCIRCUIT_CONTRACTS_DEV_WHEEL_SHA256: ${{ vars.NETCIRCUIT_CONTRACTS_DEV_WHEEL_SHA256 }}
-  NETCIRCUIT_CONTRACTS_WHEEL_URL: ${{ vars.NETCIRCUIT_CONTRACTS_WHEEL_URL }}
-  NETCIRCUIT_CONTRACTS_WHEEL_SHA256: ${{ vars.NETCIRCUIT_CONTRACTS_WHEEL_SHA256 }}
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -39,12 +37,12 @@ jobs:
             echo "PYTHONDONTWRITEBYTECODE=1"
             echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)"
           } >> "$GITHUB_ENV"
-      - name: Install locked dependencies and reviewed Contracts
-        env:
-          NETCIRCUIT_ARTIFACTS_TOKEN: ${{ secrets.NETCIRCUIT_ARTIFACTS_READ_TOKEN }}
+      - name: Install locked dependencies and build pinned Contracts
         run: |
           python -m pip install --require-hashes --only-binary=:all: -r requirements-verification.lock
-          python scripts/install_contracts.py
+          contracts_manifest="$(python -B scripts/build_ci_dependency.py Contracts)"
+          python scripts/install_contracts.py --manifest "$contracts_manifest"
+          echo "NETCIRCUIT_CONTRACTS_ARTIFACT_MANIFEST=$contracts_manifest" >> "$GITHUB_ENV"
       - name: Build and verify the installed distribution
         run: |
           python -m build --no-isolation --outdir "$NETCIRCUIT_ARTIFACTS_SESSION/dist"
