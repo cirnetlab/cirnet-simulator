@@ -12,9 +12,9 @@ import sys
 from zipfile import ZipFile
 
 try:
-    from scripts.contracts_artifact import installed_provenance
+    from scripts.contracts_artifact import NAME as CONTRACTS_NAME, VERSION as CONTRACTS_VERSION, installed_provenance
 except ModuleNotFoundError:
-    from contracts_artifact import installed_provenance
+    from contracts_artifact import NAME as CONTRACTS_NAME, VERSION as CONTRACTS_VERSION, installed_provenance
 
 
 def verify_selected_wheel(wheel, artifact):
@@ -39,6 +39,9 @@ def verify_selected_wheel(wheel, artifact):
         metadata=Parser().parsestr(archive.read(prefix+'METADATA').decode('utf-8'))
         if metadata['Name']!='netcircuit-simulator' or metadata['Version']!='0.1.1':
             raise ValueError('The selected wheel must contain netcircuit-simulator==0.1.1.')
+        dependencies = {entry.replace(' ', '') for entry in metadata.get_all('Requires-Dist', []) if ';' not in entry}
+        if dependencies != {f'{CONTRACTS_NAME}=={CONTRACTS_VERSION}', 'jsonschema==4.26.0'}:
+            raise ValueError('Simulator runtime dependency pins differ from the current source build.')
         selected_records={row[0]:row[1:] for row in csv.reader(io.StringIO(archive.read(prefix+'RECORD').decode('utf-8')))}
         installed_records={row[0]:row[1:] for row in csv.reader(io.StringIO(artifact.read_text('RECORD') or ''))}
         if set(selected_records)!=expected:

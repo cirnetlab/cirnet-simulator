@@ -19,12 +19,22 @@ def test_installed_wheel_has_expected_identity_and_resources():
     assert result.returncode==0,result.stderr
     data=json.loads(result.stdout)
     assert data['simulator']['version']=='0.1.1' and data['simulator']['owned_files']==9
+    assert data['contracts']['name']=='cirnet-contracts'
     assert data['contracts']['version']=='0.1.1' and data['contracts']['owned_files']>0
 
 def test_source_shadowing_is_rejected():
     result=probe(ROOT)
     assert result.returncode!=0
     assert 'shadowed by source' in result.stderr
+
+def test_legacy_contracts_distribution_is_rejected(tmp_path):
+    legacy = tmp_path / 'netcircuit_contracts-0.1.1.dist-info'
+    legacy.mkdir()
+    (legacy / 'METADATA').write_text('Name: netcircuit-contracts\nVersion: 0.1.1\n', encoding='utf-8')
+    result = probe(tmp_path)
+    assert result.returncode != 0
+    assert 'shares the contracts import namespace' in result.stderr
+
 
 def test_modified_wheel_payload_is_rejected(tmp_path):
     artifact=distribution('netcircuit-simulator')
