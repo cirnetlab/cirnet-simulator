@@ -4,9 +4,9 @@ import pytest
 
 from contracts.label_properties import DEFAULT_LABEL_PROPERTIES
 from contracts.signal_domains import classify_graph
-from netcircuit_sim.dispatch import SimulationDispatcher
-from netcircuit_sim.engine import VirtualCompiler
-from netcircuit_sim.nets import resolve_connectivity
+from cirnet_sim.dispatch import SimulationDispatcher
+from cirnet_sim.engine import VirtualCompiler
+from cirnet_sim.nets import resolve_connectivity
 
 
 def graph():

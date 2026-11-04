@@ -5,7 +5,7 @@ from importlib.resources import files
 
 import pytest
 
-from netcircuit_sim.engine import VirtualCompiler, SimulationError, run_plan
+from cirnet_sim.engine import VirtualCompiler, SimulationError, run_plan
 
 
 def physical_graph(voltage=5):
@@ -108,7 +108,7 @@ def test_compiler_boundary_normalizes_raw_legacy_resistance_without_mutating_the
 def test_powered_gate_output_can_drive_resistor_led_and_resistor_is_never_a_short():
     result = capture(led_loop(from_gate=True))
     assert result['device_states']['L']['state'] == 'ON'
-    from netcircuit_sim.nets import resolve_connectivity
+    from cirnet_sim.nets import resolve_connectivity
     groups = resolve_connectivity(led_loop())
     assert next(g for g in groups if 'R.A' in g) != next(g for g in groups if 'R.B' in g)
 
@@ -121,7 +121,7 @@ def test_unsupported_physical_behavior_is_reported_and_never_fabricated():
 
 
 def test_typescript_python_connectivity_parity_and_mounted_same_strip_jumper():
-    from netcircuit_sim.nets import resolve_connectivity
+    from cirnet_sim.nets import resolve_connectivity
     fixture = json.loads(files('contracts').joinpath('design-models/fixtures/physical-mounting-parity.json').read_text(encoding='utf-8'))
     assert [list(group) for group in resolve_connectivity(fixture['graph'])] == fixture['expectedGroups']
     value = copy.deepcopy(fixture['graph'])
@@ -160,7 +160,7 @@ def test_independent_source_negatives_are_not_implicitly_global_ground():
 
 
 def test_switch_property_comparison_has_the_same_boolean_semantics_as_typescript():
-    from netcircuit_sim.nets import resolve_connectivity
+    from cirnet_sim.nets import resolve_connectivity
     value = {'schema_version': '1.1', 'circuit_id': 'switch-type', 'modules': [
         {'id': 'D', 'type': 'DIP_SWITCH_A6D4100', 'properties': {'position0': 1}},
     ], 'connections': []}

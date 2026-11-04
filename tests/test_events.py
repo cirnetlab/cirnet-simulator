@@ -3,7 +3,7 @@ import pytest
 
 
 def engine():
-    return importlib.import_module('netcircuit_sim.engine')
+    return importlib.import_module('cirnet_sim.engine')
 
 
 def graph(gate='AND'):
@@ -82,7 +82,7 @@ def test_stop_and_reset_invalidate_pending_events():
 
 
 def test_analog_boundary_is_explicitly_unavailable():
-    analog=importlib.import_module('netcircuit_sim.analog')
+    analog=importlib.import_module('cirnet_sim.analog')
     assert analog.SPICEAdapter().available is False
     with pytest.raises(RuntimeError,match='UNAVAILABLE'): analog.SPICEAdapter().simulate({})
 

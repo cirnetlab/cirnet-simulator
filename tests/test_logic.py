@@ -1,7 +1,7 @@
 
-from netcircuit_sim.logic import and2
-from netcircuit_sim.circuit import evaluate_74hc08_gate
-from netcircuit_sim.waveform import DigitalSample, build_waveform
+from cirnet_sim.logic import and2
+from cirnet_sim.circuit import evaluate_74hc08_gate
+from cirnet_sim.waveform import DigitalSample, build_waveform
 import pytest
 
 

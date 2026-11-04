@@ -12,13 +12,13 @@ ROOT=Path(__file__).resolve().parents[1]
 def probe(*paths):
     script=ROOT/'scripts/check_installed.py'
     program='import sys,runpy; sys.path[:0]=sys.argv[1:-1]; script=sys.argv[-1]; sys.argv=[script]; runpy.run_path(script,run_name="__main__")'
-    return subprocess.run([sys.executable,'-I','-c',program,*map(str,paths),str(ROOT/'scripts'),str(script)],capture_output=True,text=True)
+    return subprocess.run([sys.executable,'-I','-B','-c',program,*map(str,paths),str(ROOT/'scripts'),str(script)],capture_output=True,text=True)
 
 def test_installed_wheel_has_expected_identity_and_resources():
     result=probe()
     assert result.returncode==0,result.stderr
     data=json.loads(result.stdout)
-    assert data['simulator']['version']=='0.1.1' and data['simulator']['owned_files']==9
+    assert data['simulator']['version']=='0.1.1' and data['simulator']['owned_files']==10
     assert data['contracts']['name']=='cirnet-contracts'
     assert data['contracts']['version']=='0.1.1' and data['contracts']['owned_files']>0
 
@@ -37,41 +37,45 @@ def test_legacy_contracts_distribution_is_rejected(tmp_path):
 
 
 def test_modified_wheel_payload_is_rejected(tmp_path):
-    artifact=distribution('netcircuit-simulator')
+    artifact=distribution('cirnet-simulator')
     for item in artifact.files:
         relative=Path(str(item))
-        if relative.parts[0]=='netcircuit_sim' or (relative.parts[0].endswith('.dist-info') and len(relative.parts)>1):
+        if relative.parts[0] in ('cirnet_sim', 'netcircuit_sim') or (relative.parts[0].endswith('.dist-info') and len(relative.parts)>1):
             if relative.suffix=='.pyc':continue
             destination=tmp_path/relative
             destination.parent.mkdir(parents=True,exist_ok=True)
             shutil.copyfile(artifact.locate_file(item),destination)
-    with (tmp_path/'netcircuit_sim/engine.py').open('a',encoding='utf-8') as output:output.write('\n# corrupted probe payload\n')
+    with (tmp_path/'cirnet_sim/engine.py').open('a',encoding='utf-8') as output:output.write('\n# corrupted probe payload\n')
     result=probe(tmp_path)
     assert result.returncode!=0 and 'differs from wheel RECORD' in result.stderr
 
 def test_bootstrap_failure_publishes_cleanup_cli_before_pip(tmp_path):
-    wheel=Path(os.environ['NETCIRCUIT_ARTIFACTS_SESSION'])/'leaf-dev-bootstrap/netcircuit_artifact_paths-1.0.0a1-py3-none-any.whl'
+    wheel=Path(os.environ['CIRNET_ARTIFACTS_SESSION'])/'leaf-dev-bootstrap/netcircuit_artifact_paths-1.0.0a1-py3-none-any.whl'
     pin=json.loads((ROOT/'integration/contracts-version.json').read_text(encoding='utf-8'))['dev']
     assert wheel.is_file(),'Bootstrap the pinned DEV artifact before verification.'
-    env={**os.environ,'NETCIRCUIT_ARTIFACTS_DIR':str(tmp_path),'GITHUB_ENV':str(tmp_path/'github-env'),
+    env={**os.environ,'CIRNET_ARTIFACTS_DIR':str(tmp_path),'GITHUB_ENV':str(tmp_path/'github-env'),
          'PIP_REQUIREMENT':str(tmp_path/'intentionally-missing-requirements')}
+    env.pop('CIRNET_ARTIFACTS_SESSION',None)
     env.pop('NETCIRCUIT_ARTIFACTS_SESSION',None)
     args=[sys.executable,str(ROOT/'scripts/bootstrap_contract_tools.py'),'--wheel',str(wheel),'--sha256',pin['wheel_sha256']]
     result=subprocess.run(args,env=env,capture_output=True,text=True)
     assert result.returncode!=0 and 'DEV wheel install failed' in result.stderr
     published=dict(line.split('=',1) for line in (tmp_path/'github-env').read_text(encoding='utf-8').splitlines())
-    session=Path(published['NETCIRCUIT_ARTIFACTS_SESSION'])
+    session=Path(published['CIRNET_ARTIFACTS_SESSION'])
     try:
-        assert 'NETCIRCUIT_ARTIFACTS_CLI' in published,'Bootstrap must expose canonical cleanup even when pip fails.'
-        cli=Path(published['NETCIRCUIT_ARTIFACTS_CLI'])
+        assert 'CIRNET_ARTIFACTS_CLI' in published,'Bootstrap must expose canonical cleanup even when pip fails.'
+        cli=Path(published['CIRNET_ARTIFACTS_CLI'])
         assert cli.is_relative_to(session) and cli.is_file()
         assert (session/'leaf-dev-bootstrap/install.log').read_text(encoding='utf-8')
-        cleaned=subprocess.run(['node',str(cli),'--context',published['NETCIRCUIT_ARTIFACTS_CONTEXT'],'--cleanup',str(session)],capture_output=True,text=True)
+        cleaned=subprocess.run(['node',str(cli),'--context',published['CIRNET_ARTIFACTS_CONTEXT'],'--cleanup',str(session)],capture_output=True,text=True)
         assert cleaned.returncode==0,cleaned.stderr
     finally:
         # RED also cleans the owned fixture through the already installed canonical module.
-        from netcircuit_artifact_paths import cleanup_artifact_session
-        if session.exists():cleanup_artifact_session(session,context=json.loads(published['NETCIRCUIT_ARTIFACTS_CONTEXT']))
+        try:
+            from cirnet_artifact_paths import cleanup_artifact_session
+        except ModuleNotFoundError:
+            from netcircuit_artifact_paths import cleanup_artifact_session
+        if session.exists():cleanup_artifact_session(session,context=json.loads(published['CIRNET_ARTIFACTS_CONTEXT']))
     assert not session.exists()
 
 
@@ -85,7 +89,7 @@ def test_same_version_wheel_requires_selected_archive_and_force_install(tmp_path
     import venv
     from zipfile import ZipFile, ZIP_DEFLATED
 
-    artifact=distribution('netcircuit-simulator')
+    artifact=distribution('cirnet-simulator')
     selected=Path(url2pathname(urlparse(json.loads(artifact.read_text('direct_url.json'))['url']).path))
     old=tmp_path/'a'/selected.name
     candidate=tmp_path/'b'/selected.name
@@ -110,7 +114,7 @@ def test_same_version_wheel_requires_selected_archive_and_force_install(tmp_path
     isolated=tmp_path/'v'
     venv.EnvBuilder(with_pip=False).create(isolated)
     python=isolated/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
-    result=subprocess.run([str(python),'-I','-c','import json,site; print(json.dumps(site.getsitepackages()))'],capture_output=True,text=True)
+    result=subprocess.run([str(python),'-I','-B','-c','import json,site; print(json.dumps(site.getsitepackages()))'],capture_output=True,text=True)
     assert result.returncode==0,result.stderr
     site_packages=next(Path(path) for path in json.loads(result.stdout) if Path(path).name=='site-packages')
     site_packages.mkdir(parents=True,exist_ok=True)
@@ -134,4 +138,4 @@ def test_same_version_wheel_requires_selected_archive_and_force_install(tmp_path
     assert verified.returncode==0,verified.stderr
     data=json.loads(verified.stdout)
     assert data['simulator']['selected_sha256']==hashlib.sha256(candidate.read_bytes()).hexdigest()
-    assert data['simulator']['selected_files']==14
+    assert data['simulator']['selected_files']==15

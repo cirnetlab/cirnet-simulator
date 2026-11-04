@@ -5,7 +5,7 @@ import pytest
 
 
 def dispatcher():
-    return importlib.import_module('netcircuit_sim.dispatch').SimulationDispatcher()
+    return importlib.import_module('cirnet_sim.dispatch').SimulationDispatcher()
 
 
 def request(*modules):

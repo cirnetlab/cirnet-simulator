@@ -7,13 +7,13 @@ execute must not re-read ambient configuration or choose a different core.
 """
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-import os
 import pickle
 import re
 from typing import Protocol
 
 from jsonschema import ValidationError
 from contracts.signal_domains import classify_graph
+from contracts.runtime_config import getenv
 from .dispatch import SimulationDispatcher
 from .engine import SimulationError
 from . import engine as legacy_engine
@@ -179,7 +179,7 @@ def _registry(registry):
 
 def select_backend_id(value=None,*,registry=None):
     """Resolve configuration once at application/station creation, never in run_plan."""
-    value=os.environ.get('NETCIRCUIT_SIMULATION_BACKEND','legacy') if value is None else value
+    value=getenv('CIRNET_SIMULATION_BACKEND','legacy') if value is None else value
     selected=_registry(registry)
     selected.get(value)
     return value

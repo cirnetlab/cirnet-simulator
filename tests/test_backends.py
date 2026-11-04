@@ -11,8 +11,8 @@ import pytest
 
 
 def backend_api():
-    assert importlib.util.find_spec('netcircuit_sim.backends') is not None, 'Replaceable backend facade is missing.'
-    return importlib.import_module('netcircuit_sim.backends')
+    assert importlib.util.find_spec('cirnet_sim.backends') is not None, 'Replaceable backend facade is missing.'
+    return importlib.import_module('cirnet_sim.backends')
 
 
 def graph():
@@ -42,8 +42,8 @@ class TrustedProvider:
 
 def test_legacy_compile_run_and_old_public_pairing_remain_equal():
     b=backend_api()
-    from netcircuit_sim.dispatch import SimulationDispatcher
-    from netcircuit_sim.engine import run_plan
+    from cirnet_sim.dispatch import SimulationDispatcher
+    from cirnet_sim.engine import run_plan
     original=SimulationDispatcher().compile(graph())
     selected=b.compile_graph(graph(),backend_id='legacy')
     assert selected.payload==original
@@ -54,12 +54,12 @@ def test_legacy_compile_run_and_old_public_pairing_remain_equal():
 
 def test_preview_preserves_unsupported_states_and_does_not_use_strict_compile():
     b=backend_api()
-    from netcircuit_sim.engine import preview_physical_graph
+    from cirnet_sim.engine import preview_physical_graph
     value={'schema_version':'1.1','circuit_id':'preview','modules':[{'id':'Q','type':'TRANSISTOR_2N3904'}],'connections':[]}
     expected=preview_physical_graph(value)
     assert expected['device_states']['Q']['state']=='UNSUPPORTED'
     assert b.preview_physical_graph(value,backend_id='legacy')==expected
-    from netcircuit_sim.dispatch import SimulationDispatcher
+    from cirnet_sim.dispatch import SimulationDispatcher
     with pytest.raises(b.SimulationError) as legacy_error:SimulationDispatcher().compile(value)
     with pytest.raises(b.SimulationError) as provider_error:b.compile_graph(value,backend_id='legacy')
     assert str(provider_error.value)==str(legacy_error.value)=='ANALOG_UNAVAILABLE'
@@ -67,10 +67,11 @@ def test_preview_preserves_unsupported_states_and_does_not_use_strict_compile():
 
 def test_selection_is_explicit_and_environment_changes_do_not_reselect_a_plan(monkeypatch):
     b=backend_api()
+    monkeypatch.delenv('CIRNET_SIMULATION_BACKEND',raising=False)
     monkeypatch.delenv('NETCIRCUIT_SIMULATION_BACKEND',raising=False)
     assert b.select_backend_id()=='legacy'
     selected=b.select_backend_id()
-    monkeypatch.setenv('NETCIRCUIT_SIMULATION_BACKEND','ngspice')
+    monkeypatch.setenv('CIRNET_SIMULATION_BACKEND','ngspice')
     assert b.select_backend_id()=='ngspice'
     plan=b.compile_graph(graph(),backend_id=selected)
     assert b.run_plan(plan,CONFIG)['samples']==[{'signal':'L.IN','time_ns':0,'value':1}]
@@ -86,7 +87,7 @@ def test_unknown_or_empty_configuration_fails_without_loading_code(value):
 
 def test_unknown_environment_selection_fails_clearly(monkeypatch):
     b=backend_api()
-    monkeypatch.setenv('NETCIRCUIT_SIMULATION_BACKEND','missing')
+    monkeypatch.setenv('CIRNET_SIMULATION_BACKEND','missing')
     with pytest.raises(ValueError):b.get_backend()
 
 
@@ -156,7 +157,7 @@ def test_worker_rejects_identity_tampering_before_provider_execution(monkeypatch
 
 def test_raw_legacy_plan_is_not_implicitly_reinterpreted_by_new_worker():
     b=backend_api()
-    from netcircuit_sim.dispatch import SimulationDispatcher
+    from cirnet_sim.dispatch import SimulationDispatcher
     with pytest.raises(b.SimulationError,match='BACKEND_PLAN_INVALID'):
         b.run_plan(SimulationDispatcher().compile(graph()),CONFIG)
 
@@ -167,7 +168,7 @@ def test_pickle_and_actual_spawn_keep_pinned_provider_despite_environment(monkey
     restored=pickle.loads(pickle.dumps(plan))
     assert restored==plan and dict(restored.directions)==dict(plan.directions)
     expected=b.run_plan(plan,CONFIG)
-    monkeypatch.setenv('NETCIRCUIT_SIMULATION_BACKEND','ngspice')
+    monkeypatch.setenv('CIRNET_SIMULATION_BACKEND','ngspice')
     with ProcessPoolExecutor(max_workers=1,mp_context=get_context('spawn')) as pool:
         assert pool.submit(b.run_plan,restored,CONFIG).result(timeout=20)==expected
         custom=b.compile_graph(graph(),backend_id='trusted',registry=b.BackendRegistry([TrustedProvider()]))
@@ -178,7 +179,7 @@ def test_pickle_and_actual_spawn_keep_pinned_provider_despite_environment(monkey
 def test_graph_metadata_cannot_override_explicit_backend_selection(monkeypatch):
     b=backend_api()
     value=graph();value['modules'][0]['properties'].update(backend='legacy',core='legacy')
-    monkeypatch.setenv('NETCIRCUIT_SIMULATION_BACKEND','legacy')
+    monkeypatch.setenv('CIRNET_SIMULATION_BACKEND','legacy')
     with pytest.raises(b.SimulationError,match='BACKEND_UNAVAILABLE'):
         b.compile_graph(value,backend_id='ngspice')
 
@@ -208,7 +209,7 @@ def test_custom_worker_composes_registry_and_uses_compiled_configuration(tmp_pat
     (tmp_path/'trusted_worker.py').write_text("""
 import os
 from types import SimpleNamespace
-from netcircuit_sim.backends import BackendIdentity,BackendDescriptor,BackendRegistry,run_plan
+from cirnet_sim.backends import BackendIdentity,BackendDescriptor,BackendRegistry,run_plan
 class ConfiguredProvider:
     descriptor=BackendDescriptor(BackendIdentity('configured','1.0.0',1),True,True,False,1)
     def compile(self,graph):
@@ -226,7 +227,7 @@ sys.path.insert(0,str(Path(__file__).parent))
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import get_context
 from trusted_worker import ConfiguredProvider,execute
-from netcircuit_sim.backends import BackendRegistry,compile_graph
+from cirnet_sim.backends import BackendRegistry,compile_graph
 if __name__=='__main__':
     registry=BackendRegistry([ConfiguredProvider()])
     os.environ['TEST_PROVIDER_LEVEL']='1'
@@ -239,7 +240,7 @@ if __name__=='__main__':
         b=pool.submit(execute,second).result(timeout=20)
     print(json.dumps([a,b]))
 """,encoding='utf-8')
-    result=subprocess.run([sys.executable,'-I',str(tmp_path/'run_worker.py')],capture_output=True,text=True,timeout=50)
+    result=subprocess.run([sys.executable,'-I','-B',str(tmp_path/'run_worker.py')],capture_output=True,text=True,timeout=50)
     assert result.returncode==0,result.stderr
     first,second=json.loads(result.stdout)
     assert first['pid']==second['pid']

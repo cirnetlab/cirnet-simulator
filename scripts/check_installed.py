@@ -30,15 +30,16 @@ def verify_selected_wheel(wheel, artifact):
         installed_digest=archive_info['hash'].split('=',1)[1]
     if installed_digest!=digest:
         raise ValueError('Installed Simulator archive digest differs from the selected wheel; force reinstall the selected wheel.')
-    prefix='netcircuit_simulator-0.1.1.dist-info/'
-    expected={'netcircuit_sim/'+name+'.py' for name in ('__init__','analog','circuit','dispatch','engine','logic','nets','waveform','backends')}
+    prefix='cirnet_simulator-0.1.1.dist-info/'
+    expected={'cirnet_sim/'+name+'.py' for name in ('__init__','analog','circuit','dispatch','engine','logic','nets','waveform','backends')}
+    expected.add('netcircuit_sim/__init__.py')
     expected.update(prefix+name for name in ('licenses/LICENSE','METADATA','WHEEL','top_level.txt','RECORD'))
     with ZipFile(io.BytesIO(payload)) as archive:
         if len(archive.namelist())!=len(expected) or set(archive.namelist())!=expected:
             raise ValueError('Unexpected selected wheel payload inventory.')
         metadata=Parser().parsestr(archive.read(prefix+'METADATA').decode('utf-8'))
-        if metadata['Name']!='netcircuit-simulator' or metadata['Version']!='0.1.1':
-            raise ValueError('The selected wheel must contain netcircuit-simulator==0.1.1.')
+        if metadata['Name']!='cirnet-simulator' or metadata['Version']!='0.1.1':
+            raise ValueError('The selected wheel must contain cirnet-simulator==0.1.1.')
         dependencies = {entry.replace(' ', '') for entry in metadata.get_all('Requires-Dist', []) if ';' not in entry}
         if dependencies != {f'{CONTRACTS_NAME}=={CONTRACTS_VERSION}', 'jsonschema==4.26.0'}:
             raise ValueError('Simulator runtime dependency pins differ from the current source build.')
@@ -57,33 +58,36 @@ def verify_selected_wheel(wheel, artifact):
 
 
 def check_installed(*,wheel=None):
-    import netcircuit_sim
-    artifact=distribution('netcircuit-simulator')
+    import cirnet_sim
+    artifact=distribution('cirnet-simulator')
     if artifact.version!='0.1.1':
-        raise ValueError('Expected netcircuit-simulator==0.1.1.')
+        raise ValueError('Expected cirnet-simulator==0.1.1.')
     if not artifact.read_text('WHEEL') or not artifact.read_text('RECORD'):
         raise ValueError('Simulator distribution is shadowed by source metadata.')
     direct=json.loads(artifact.read_text('direct_url.json') or '{}')
     if 'dir_info' in direct:
         raise ValueError('Simulator requires a wheel; editable/source-directory installs are unsupported.')
-    entry=Path(artifact.locate_file('netcircuit_sim/__init__.py')).resolve()
-    if Path(netcircuit_sim.__file__).resolve()!=entry:
+    entry=Path(artifact.locate_file('cirnet_sim/__init__.py')).resolve()
+    if Path(cirnet_sim.__file__).resolve()!=entry:
         raise ValueError('Simulator imports are shadowed by source.')
+    import netcircuit_sim
+    if netcircuit_sim is not cirnet_sim:
+        raise ValueError('Legacy Simulator imports must resolve to the canonical package.')
     owned=[]
     for item in artifact.files or ():
-        if not str(item).replace('\\','/').startswith('netcircuit_sim/') or item.suffix=='.pyc':
+        if not str(item).replace('\\','/').startswith(('cirnet_sim/', 'netcircuit_sim/')) or item.suffix=='.pyc':
             continue
         target=Path(artifact.locate_file(item)).resolve()
-        if not target.is_relative_to(entry.parent) or not target.is_file() or item.hash is None or item.hash.mode!='sha256':
+        if not target.is_relative_to(entry.parent.parent / str(item).replace('\\','/').split('/')[0]) or not target.is_file() or item.hash is None or item.hash.mode!='sha256':
             raise ValueError('Simulator package lacks valid wheel RECORD ownership: '+str(item))
         digest=base64.urlsafe_b64encode(hashlib.sha256(target.read_bytes()).digest()).rstrip(b'=').decode()
         if digest!=item.hash.value:
             raise ValueError('Simulator package differs from wheel RECORD: '+str(item))
         owned.append(str(item))
-    if set(owned)!={'netcircuit_sim/'+name+'.py' for name in ('__init__','analog','circuit','dispatch','engine','logic','nets','waveform','backends')}:
-        raise ValueError('Expected the exact nine-module Simulator runtime inventory.')
+    if set(owned)!=({'cirnet_sim/'+name+'.py' for name in ('__init__','analog','circuit','dispatch','engine','logic','nets','waveform','backends')} | {'netcircuit_sim/__init__.py'}):
+        raise ValueError('Expected the exact nine-module Simulator runtime and legacy import shim inventory.')
     for name,module in tuple(sys.modules.items()):
-        if name=='netcircuit_sim' or name.startswith('netcircuit_sim.'):
+        if name in ('cirnet_sim', 'netcircuit_sim') or name.startswith(('cirnet_sim.', 'netcircuit_sim.')):
             origin=getattr(module,'__file__',None)
             if origin and not Path(origin).resolve().is_relative_to(entry.parent):
                 raise ValueError('Simulator submodule imports are shadowed by source: '+name)

@@ -3,7 +3,7 @@ requires = ["setuptools==84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "netcircuit-simulator"
+name = "cirnet-simulator"
 version = "0.1.1"
 description = "Deterministic digital and bounded DC simulation for CIRNET"
 readme = "README.md"
@@ -19,7 +19,7 @@ Documentation = "https://github.com/CIRNETLAB/CIRNET-Simulator/blob/master/READM
 test = ["pytest==9.1.1"]
 
 [tool.setuptools.packages.find]
-include = ["netcircuit_sim*"]
+include = ["cirnet_sim*", "netcircuit_sim"]
 namespaces = false
 
 [tool.pytest.ini_options]

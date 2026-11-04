@@ -1,7 +1,7 @@
 import copy
 import pytest
 
-from netcircuit_sim.engine import VirtualCompiler, SimulationError, run_plan
+from cirnet_sim.engine import VirtualCompiler, SimulationError, run_plan
 
 
 def graph():
