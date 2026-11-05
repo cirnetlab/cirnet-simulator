@@ -1,5 +1,7 @@
 # CIRNET-Simulator
 
+[English documentation](docs/en/index.md) · [Tài liệu tiếng Việt](docs/vi/index.md)
+
 Repository: [cirnetlab/cirnet-simulator](https://github.com/cirnetlab/cirnet-simulator). Canonical Python imports use `cirnet_sim`; `CIRNET_*` settings take precedence over legacy `NETCIRCUIT_*` aliases. Legacy imports remain compatible.
 
 Independent `cirnet-simulator==0.1.2` with replaceable simulation backends, Python >=3.11, consuming `cirnet-contracts==0.1.2`. The canonical Python namespace and public preview/dispatch imports use `cirnet_sim`; the small `netcircuit_sim` shim aliases the same modules and classes for existing consumers. Release artifacts are wheel and sdist. Revalidate the existing immutable `v0.1.1` artifacts under the current repository URL while retaining their original source revisions and SHA256. Compare candidates from changed source separately; changed published bytes or tags require an explicit release decision and must respect immutability. Record the selected artifacts in the system manifest. No sibling checkout or API/Web implementation is required.
