@@ -17,7 +17,7 @@ Build the current source in a fresh environment with the reviewed
 original `netcircuit-contracts==0.1.1` dependency and uses a separate
 environment. Both Contracts distributions install the `contracts` namespace.
 
-Use Node 26 and Python 3.12 in CI (Python >=3.11 supported). Select the reviewed Contracts artifact manifest, which contains exact wheel and DEV paths/SHA256. A fresh Python environment should live outside the checkout. The exact third-party closure is in requirements-verification.lock. Set TMP/TEMP/TMPDIR and pip cache inside the owned session before subsequent commands that create temporary diagnostics. Read [verification policy](docs/VERIFICATION.md).
+Use Node 26 and Python 3.14 in CI (Python >=3.11 supported). Select the reviewed Contracts artifact manifest, which contains exact wheel and DEV paths/SHA256. A fresh Python environment should live outside the checkout. The exact third-party closure is in requirements-verification.lock. Set TMP/TEMP/TMPDIR and pip cache inside the owned session before subsequent commands that create temporary diagnostics. Read [verification policy](docs/VERIFICATION.md).
 
 PowerShell, starting in this repository with the intended Python environment active:
 
