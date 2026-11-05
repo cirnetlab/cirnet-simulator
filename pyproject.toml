@@ -12,8 +12,8 @@ license-files = ["LICENSE"]
 dependencies = ["cirnet-contracts==0.1.1", "jsonschema==4.26.0"]
 
 [project.urls]
-Repository = "https://github.com/CIRNETLAB/CIRNET-Simulator"
-Documentation = "https://github.com/CIRNETLAB/CIRNET-Simulator/blob/master/README.md"
+Repository = "https://github.com/cirnetlab/cirnet-simulator"
+Documentation = "https://github.com/cirnetlab/cirnet-simulator/blob/master/README.md"
 
 [project.optional-dependencies]
 test = ["pytest==9.1.1"]

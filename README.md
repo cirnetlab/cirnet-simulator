@@ -1,6 +1,6 @@
 # CIRNET-Simulator
 
-Repository: [CIRNETLAB/CIRNET-Simulator](https://github.com/CIRNETLAB/CIRNET-Simulator). Existing local directories may retain the `net-Circuit-Simulator` name. Canonical Python imports use `cirnet_sim`; `CIRNET_*` settings take precedence over legacy `NETCIRCUIT_*` aliases. Legacy imports remain compatible.
+Repository: [cirnetlab/cirnet-simulator](https://github.com/cirnetlab/cirnet-simulator). Canonical Python imports use `cirnet_sim`; `CIRNET_*` settings take precedence over legacy `NETCIRCUIT_*` aliases. Legacy imports remain compatible.
 
 Independent `cirnet-simulator==0.1.1` with replaceable simulation backends, Python >=3.11, consuming `cirnet-contracts==0.1.1`. The canonical Python namespace and public preview/dispatch imports use `cirnet_sim`; the small `netcircuit_sim` shim aliases the same modules and classes for existing consumers. Release artifacts are wheel and sdist. Revalidate the existing immutable `v0.1.1` artifacts under the current repository URL while retaining their original source revisions and SHA256. Compare candidates from changed source separately; changed published bytes or tags require an explicit release decision and must respect immutability. Record the selected artifacts in the system manifest. No sibling checkout or API/Web implementation is required.
 
@@ -8,7 +8,7 @@ Supported CircuitGraph 1.0/1.1/1.2 passes offline schema/authoring validation an
 
 Time is integer nanoseconds; default digital delay is an educational 8 ns model, not measured component timing. Floating inputs remain X. Changes at one timestamp settle before capture with stable ordering. Captures hold actual 0/1/X transitions, at most four requested probes. Default software budgets are 1 ms, 100,000 scheduled events and 100,000 captured samples. The supported scheduling limit up to 1,000,000 is distinct from the fixed capture bound; exceeding either fails without truncation.
 
-Hardware owns the bounded worker pool, RPC sessions and stop/reset generation invalidation. Remote owns REST previews, auth/persistence and integrated acceptance. Canonical architecture remains [Lab-First](https://github.com/CIRNETLAB/CIRNET-Remote/blob/25d2e6784035f6a8165142f8a8e03c4534512bcc/docs/ARCHITECTURE.md); [signal-domain authority](https://github.com/CIRNETLAB/CIRNET-Remote/blob/25d2e6784035f6a8165142f8a8e03c4534512bcc/docs/architecture/signal-domains-and-simulation.md) defines current model boundaries. The pinned authority revision is unchanged by the repository rename.
+Hardware owns the bounded worker pool, RPC sessions and stop/reset generation invalidation. Remote owns REST previews, auth/persistence and integrated acceptance. Canonical architecture remains [Lab-First](https://github.com/cirnetlab/cirnet-remote/blob/25d2e6784035f6a8165142f8a8e03c4534512bcc/docs/ARCHITECTURE.md); [signal-domain authority](https://github.com/cirnetlab/cirnet-remote/blob/25d2e6784035f6a8165142f8a8e03c4534512bcc/docs/architecture/signal-domains-and-simulation.md) defines current model boundaries. The pinned authority revision is unchanged by the repository rename.
 
 ## Build and verify
 
@@ -45,7 +45,7 @@ node scripts/artifact-paths.mjs --cleanup $env:CIRNET_ARTIFACTS_SESSION
 
 CI builds the renamed Contracts wheel from the commit and SHA256 source archive pinned in `integration/ci-source-dependencies.json`. The build and its hash-locked toolchain stay inside the owned external session. Local installs use an explicit reviewed wheel selection. The independent DEV wheel still uses its configured URL and SHA256. Public published assets support anonymous access; authenticated CI/draft access still uses the selected-repository read token. Only GitHub release-asset API requests receive credentials; redirects do not. Missing pins fail closed. No package is published automatically. Offline verification downloads the SHA256-locked closure into a wheelhouse, then installs with `--require-hashes --only-binary=:all: --no-index --find-links ABSOLUTE_WHEELHOUSE`; first-party artifacts remain selected by reviewed digest.
 
-The existing immutable [v0.1.1 release](https://github.com/CIRNETLAB/CIRNET-Simulator/releases/tag/v0.1.1) retains its original tag, artifact bytes and source provenance. A build from renamed current-source documentation/metadata is a separate candidate even when its package version is 0.1.1; it must not replace those published bytes or be attributed to the original tag. See [release verification work](docs/M6_RELEASE_WORK.md).
+The existing immutable [v0.1.1 release](https://github.com/cirnetlab/cirnet-simulator/releases/tag/v0.1.1) retains its original tag, artifact bytes and source provenance. A build from renamed current-source documentation/metadata is a separate candidate even when its package version is 0.1.1; it must not replace those published bytes or be attributed to the original tag. See [release verification work](docs/M6_RELEASE_WORK.md).
 
 ## Compatibility and rollback
 
