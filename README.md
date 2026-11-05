@@ -2,7 +2,7 @@
 
 Repository: [cirnetlab/cirnet-simulator](https://github.com/cirnetlab/cirnet-simulator). Canonical Python imports use `cirnet_sim`; `CIRNET_*` settings take precedence over legacy `NETCIRCUIT_*` aliases. Legacy imports remain compatible.
 
-Independent `cirnet-simulator==0.1.1` with replaceable simulation backends, Python >=3.11, consuming `cirnet-contracts==0.1.1`. The canonical Python namespace and public preview/dispatch imports use `cirnet_sim`; the small `netcircuit_sim` shim aliases the same modules and classes for existing consumers. Release artifacts are wheel and sdist. Revalidate the existing immutable `v0.1.1` artifacts under the current repository URL while retaining their original source revisions and SHA256. Compare candidates from changed source separately; changed published bytes or tags require an explicit release decision and must respect immutability. Record the selected artifacts in the system manifest. No sibling checkout or API/Web implementation is required.
+Independent `cirnet-simulator==0.1.2` with replaceable simulation backends, Python >=3.11, consuming `cirnet-contracts==0.1.2`. The canonical Python namespace and public preview/dispatch imports use `cirnet_sim`; the small `netcircuit_sim` shim aliases the same modules and classes for existing consumers. Release artifacts are wheel and sdist. Revalidate the existing immutable `v0.1.1` artifacts under the current repository URL while retaining their original source revisions and SHA256. Compare candidates from changed source separately; changed published bytes or tags require an explicit release decision and must respect immutability. Record the selected artifacts in the system manifest. No sibling checkout or API/Web implementation is required.
 
 Supported CircuitGraph 1.0/1.1/1.2 passes offline schema/authoring validation and explicit domain dispatch into deterministic event simulation. Models retain switch/input, AND/74HC08, NOT, OR/XOR, LED/probe, clock and the bounded powered-HC08/source/resistor/LED DC subset. Known board/instrument visuals create no electrical nets. Unknown models are UNEXECUTABLE. Analog/SPICE/mixed adapters remain UNAVAILABLE without fabricated samples.
 
@@ -13,7 +13,7 @@ Hardware owns the bounded worker pool, RPC sessions and stop/reset generation in
 ## Build and verify
 
 Build the current source in a fresh environment with the reviewed
-`cirnet-contracts==0.1.1` wheel. The immutable Simulator release keeps its
+`cirnet-contracts==0.1.2` wheel. The immutable Simulator release keeps its
 original `netcircuit-contracts==0.1.1` dependency and uses a separate
 environment. Both Contracts distributions install the `contracts` namespace.
 
@@ -32,9 +32,9 @@ python -m pip install --require-hashes --only-binary=:all: -r requirements-verif
 python scripts/install_contracts.py
 $env:SOURCE_DATE_EPOCH = git log -1 --format=%ct
 python -m build --no-isolation --outdir "$env:CIRNET_ARTIFACTS_SESSION/dist"
-python -m pip install --no-deps --force-reinstall "$env:CIRNET_ARTIFACTS_SESSION/dist/cirnet_simulator-0.1.1-py3-none-any.whl"
+python -m pip install --no-deps --force-reinstall "$env:CIRNET_ARTIFACTS_SESSION/dist/cirnet_simulator-0.1.2-py3-none-any.whl"
 python -m pip check
-python scripts/check_installed.py --wheel "$env:CIRNET_ARTIFACTS_SESSION/dist/cirnet_simulator-0.1.1-py3-none-any.whl"
+python scripts/check_installed.py --wheel "$env:CIRNET_ARTIFACTS_SESSION/dist/cirnet_simulator-0.1.2-py3-none-any.whl"
 $product = (Get-Location).Path
 Push-Location $env:CIRNET_ARTIFACTS_SESSION
 python -I -B -m pytest "$product/tests" --basetemp "$env:CIRNET_ARTIFACTS_SESSION/pytest"
@@ -43,13 +43,13 @@ Pop-Location
 node scripts/artifact-paths.mjs --cleanup $env:CIRNET_ARTIFACTS_SESSION
 ```
 
-CI builds the renamed Contracts wheel from the commit and SHA256 source archive pinned in `integration/ci-source-dependencies.json`. The build and its hash-locked toolchain stay inside the owned external session. Local installs use an explicit reviewed wheel selection. The independent DEV wheel still uses its configured URL and SHA256. Public published assets support anonymous access; authenticated CI/draft access still uses the selected-repository read token. Only GitHub release-asset API requests receive credentials; redirects do not. Missing pins fail closed. No package is published automatically. Offline verification downloads the SHA256-locked closure into a wheelhouse, then installs with `--require-hashes --only-binary=:all: --no-index --find-links ABSOLUTE_WHEELHOUSE`; first-party artifacts remain selected by reviewed digest.
+CI selects the reviewed Contracts 0.1.2 wheel with `CIRNET_CONTRACTS_WHEEL_URL` and `CIRNET_CONTRACTS_WHEEL_SHA256`. The prior Git archive pins in `integration/ci-source-dependencies.json` remain available to reproduce their recorded 0.1.1 builds. Local installs use an explicit reviewed wheel selection. The independent DEV wheel still uses its configured URL and SHA256. Public published assets support anonymous access; authenticated CI/draft access still uses the selected-repository read token. Only GitHub release-asset API requests receive credentials; redirects do not. Missing pins fail closed. No package is published automatically. Offline verification downloads the SHA256-locked closure into a wheelhouse, then installs with `--require-hashes --only-binary=:all: --no-index --find-links ABSOLUTE_WHEELHOUSE`; first-party artifacts remain selected by reviewed digest.
 
-The existing immutable [v0.1.1 release](https://github.com/cirnetlab/cirnet-simulator/releases/tag/v0.1.1) retains its original tag, artifact bytes and source provenance. A build from renamed current-source documentation/metadata is a separate candidate even when its package version is 0.1.1; it must not replace those published bytes or be attributed to the original tag. See [release verification work](docs/M6_RELEASE_WORK.md).
+The existing immutable [v0.1.1 release](https://github.com/cirnetlab/cirnet-simulator/releases/tag/v0.1.1) retains its original tag, artifact bytes and source provenance. The 0.1.2 wheel and sdist belong to `cirnet-simulator-v0.1.2`, tagged `v0.1.2` after release acceptance. See [release verification work](docs/M6_RELEASE_WORK.md).
 
 ## Compatibility and rollback
 
-The canonical `cirnet_sim.backends` facade retains the legacy runtime algorithms extracted from Remote revision 25d2e6784035f6a8165142f8a8e03c4534512bcc. Existing Graph 1.0/1.1/1.2, model selection, descriptor identity, version pins, legacy import aliases and numeric bounds remain compatible. Tests load shared fixtures from installed Contracts resources. API and Hardware consumers must both pin Simulator 0.1.1 and Contracts 0.1.1.
+The canonical `cirnet_sim.backends` facade retains the legacy runtime algorithms extracted from Remote revision 25d2e6784035f6a8165142f8a8e03c4534512bcc. Existing Graph 1.0/1.1/1.2, model selection, descriptor identity, version pins, legacy import aliases and numeric bounds remain compatible. Tests load shared fixtures from installed Contracts resources. API and Hardware consumers must both pin Simulator 0.1.2 and Contracts 0.1.2 for this release.
 
 Rollback restores the prior compatible Simulator/Contracts wheels and consumer dependency pins. No stored graph/capture/data conversion is part of M3. Original Remote source is retained as frozen provenance/rollback material. Git history extraction/mapping, ancestry reachability and integrated acceptance are recorded by the migration release process; historical extraction reports preserve their original results.
 

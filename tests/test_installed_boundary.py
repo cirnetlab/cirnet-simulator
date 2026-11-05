@@ -18,9 +18,9 @@ def test_installed_wheel_has_expected_identity_and_resources():
     result=probe()
     assert result.returncode==0,result.stderr
     data=json.loads(result.stdout)
-    assert data['simulator']['version']=='0.1.1' and data['simulator']['owned_files']==10
+    assert data['simulator']['version']=='0.1.2' and data['simulator']['owned_files']==10
     assert data['contracts']['name']=='cirnet-contracts'
-    assert data['contracts']['version']=='0.1.1' and data['contracts']['owned_files']>0
+    assert data['contracts']['version']=='0.1.2' and data['contracts']['owned_files']>0
 
 def test_source_shadowing_is_rejected():
     result=probe(ROOT)
@@ -50,8 +50,9 @@ def test_modified_wheel_payload_is_rejected(tmp_path):
     assert result.returncode!=0 and 'differs from wheel RECORD' in result.stderr
 
 def test_bootstrap_failure_publishes_cleanup_cli_before_pip(tmp_path):
-    wheel=Path(os.environ['CIRNET_ARTIFACTS_SESSION'])/'leaf-dev-bootstrap/netcircuit_artifact_paths-1.0.0a1-py3-none-any.whl'
     pin=json.loads((ROOT/'integration/contracts-version.json').read_text(encoding='utf-8'))['dev']
+    filename=f"{pin['name'].replace('-', '_')}-{pin['version']}-py3-none-any.whl"
+    wheel=Path(os.environ['CIRNET_ARTIFACTS_SESSION'])/'leaf-dev-bootstrap'/filename
     assert wheel.is_file(),'Bootstrap the pinned DEV artifact before verification.'
     env={**os.environ,'CIRNET_ARTIFACTS_DIR':str(tmp_path),'GITHUB_ENV':str(tmp_path/'github-env'),
          'PIP_REQUIREMENT':str(tmp_path/'intentionally-missing-requirements')}

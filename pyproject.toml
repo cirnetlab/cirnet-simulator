@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cirnet-simulator"
-version = "0.1.1"
+version = "0.1.2"
 description = "Deterministic digital and bounded DC simulation for CIRNET"
 readme = "README.md"
 requires-python = ">=3.11"
 license-files = ["LICENSE"]
-dependencies = ["cirnet-contracts==0.1.1", "jsonschema==4.26.0"]
+dependencies = ["cirnet-contracts==0.1.2", "jsonschema==4.26.0"]
 
 [project.urls]
 Repository = "https://github.com/cirnetlab/cirnet-simulator"

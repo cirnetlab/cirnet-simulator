@@ -1,5 +1,18 @@
 # Simulator verification
 
+## 2026-11-05 Simulator 0.1.2 candidate
+
+Native Windows verification at UTC+07:00 used an external export of the
+uncommitted candidate based on `859c6f135119249a864b92c27d0bcc4a1ee2c6ea`,
+CPython 3.14.4, and the exact canonical Contracts 0.1.2 wheel. The wheel from
+the candidate sdist matched a separate source wheel build byte for byte.
+The exact installed wheel provenance, `pip check`, and all 133 Simulator tests
+passed. Actionlint 1.7.12 passed the workflow. Raw output used the external
+session owned by `cirnet-release-014-20261105`. The pytest log SHA256 is
+`55a92f6300a729d2624e72c3ab1e5cb43753e2cb6ef3f85e2948c7625f489d72`.
+These results cover the local candidate. Release artifacts require a separate
+build from the actual committed source.
+
 ## 2026-11-05 Lowercase repository paths
 
 The pinned Contracts commit is unchanged. GitHub regenerated its source archive
@@ -42,9 +55,9 @@ hosted Actions are NOT_RUN for this policy change. Historical results below
 retain their recorded Node versions. Evidence was inspected in the shared
 external session owned by `cirnet-node26-compat-20261105`.
 
-Current repository identity is [cirnetlab/cirnet-simulator](https://github.com/cirnetlab/cirnet-simulator). Dated extraction and provenance records remain valid. Current-source CI builds the renamed Contracts wheel from the exact Git commit and SHA256 source archive in `integration/ci-source-dependencies.json`. Keep immutable v0.1.1 source/tag/artifact provenance separate from candidates rebuilt after documentation or package metadata changes. Pass `-B` explicitly to isolated Python tests because `-I` ignores the environment's bytecode setting.
+Current repository identity is [cirnetlab/cirnet-simulator](https://github.com/cirnetlab/cirnet-simulator). Dated extraction and provenance records remain valid. Current-source CI selects the exact Contracts 0.1.2 wheel by immutable URL and SHA256. The Git archive pin in `integration/ci-source-dependencies.json` reproduces the recorded 0.1.1 dependency build. Keep immutable v0.1.1 source/tag/artifact provenance separate from candidates rebuilt after documentation or package metadata changes. Pass `-B` explicitly to isolated Python tests because `-I` ignores the environment's bytecode setting.
 
-Select the exact `cirnet-contracts==0.1.1` and DEV 1.0.0a1 wheel artifacts by SHA256 in a fresh environment. scripts/bootstrap_contract_tools.py, artifact_download.py, contracts_artifact.py and allocator adapters originate from Remote revision 25d2e6784035f6a8165142f8a8e03c4534512bcc. DEV source uses `cirnet-artifact-paths` and `cirnet_artifact_paths`; the exact reviewed lock still selects the immutable legacy `netcircuit-artifact-paths` wheel. The canonical allocator implementation belongs exclusively to that installed DEV artifact; these adapters validate and delegate to it. Canonical DEV selection requires a matching reviewed wheel/Node lock.
+Select the exact `cirnet-contracts==0.1.2` and `cirnet-artifact-paths==1.0.0a1` wheel artifacts by SHA256 in a fresh environment. The bootstrap, artifact download, Contracts and allocator adapters originate from Remote revision 25d2e6784035f6a8165142f8a8e03c4534512bcc. The adapters delegate to the installed `cirnet_artifact_paths` module after checking its wheel and Node resource against the reviewed lock.
 
 Set CIRNET_ARTIFACTS_CONTEXT before bootstrap when several repositories participate. The JSON object contains an owner and every participating absolute Git root. Standalone verification defaults to this repository only. Keep the identical context for children and cleanup.
 
@@ -57,7 +70,7 @@ Check the wheel inventory (nine canonical runtime modules, one legacy import shi
 After inspecting diagnostics and verifying owned child processes exited, clean only this session using `node scripts/artifact-paths.mjs --cleanup ABSOLUTE_SESSION`. Never remove an arbitrary parent or another session. Preserve shared integration sessions for their owner to clean. No full browser result or physical hardware availability follows from these package tests.
 
 
-Backend verification additionally covers legacy compile/run/preview parity, permissive unsupported previews, truthful ngspice unavailability without native launch, trusted provider delegation, immutable identity/directions/registry snapshots, source-independent pickle/spawn execution, and rejection of missing/mismatched providers without fallback. The current Hardware composition permits built-ins only; custom extension tests compose a trusted registry explicitly in the child. Preserve historical baseline artifacts by exact digest while validating the current 0.1.1 artifact; no native integration or analog capability is established by these tests.
+Backend verification additionally covers legacy compile/run/preview parity, permissive unsupported previews, truthful ngspice unavailability without native launch, trusted provider delegation, immutable identity/directions/registry snapshots, source-independent pickle/spawn execution, and rejection of missing/mismatched providers without fallback. The current Hardware composition permits built-ins only; custom extension tests compose a trusted registry explicitly in the child. Preserve historical baseline artifacts by exact digest while validating the current 0.1.2 artifact; no native integration or analog capability is established by these tests.
 
 
 ## 2026-11-04 canonical naming verification

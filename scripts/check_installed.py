@@ -30,7 +30,7 @@ def verify_selected_wheel(wheel, artifact):
         installed_digest=archive_info['hash'].split('=',1)[1]
     if installed_digest!=digest:
         raise ValueError('Installed Simulator archive digest differs from the selected wheel; force reinstall the selected wheel.')
-    prefix='cirnet_simulator-0.1.1.dist-info/'
+    prefix='cirnet_simulator-0.1.2.dist-info/'
     expected={'cirnet_sim/'+name+'.py' for name in ('__init__','analog','circuit','dispatch','engine','logic','nets','waveform','backends')}
     expected.add('netcircuit_sim/__init__.py')
     expected.update(prefix+name for name in ('licenses/LICENSE','METADATA','WHEEL','top_level.txt','RECORD'))
@@ -38,8 +38,8 @@ def verify_selected_wheel(wheel, artifact):
         if len(archive.namelist())!=len(expected) or set(archive.namelist())!=expected:
             raise ValueError('Unexpected selected wheel payload inventory.')
         metadata=Parser().parsestr(archive.read(prefix+'METADATA').decode('utf-8'))
-        if metadata['Name']!='cirnet-simulator' or metadata['Version']!='0.1.1':
-            raise ValueError('The selected wheel must contain cirnet-simulator==0.1.1.')
+        if metadata['Name']!='cirnet-simulator' or metadata['Version']!='0.1.2':
+            raise ValueError('The selected wheel must contain cirnet-simulator==0.1.2.')
         dependencies = {entry.replace(' ', '') for entry in metadata.get_all('Requires-Dist', []) if ';' not in entry}
         if dependencies != {f'{CONTRACTS_NAME}=={CONTRACTS_VERSION}', 'jsonschema==4.26.0'}:
             raise ValueError('Simulator runtime dependency pins differ from the current source build.')
@@ -60,8 +60,8 @@ def verify_selected_wheel(wheel, artifact):
 def check_installed(*,wheel=None):
     import cirnet_sim
     artifact=distribution('cirnet-simulator')
-    if artifact.version!='0.1.1':
-        raise ValueError('Expected cirnet-simulator==0.1.1.')
+    if artifact.version!='0.1.2':
+        raise ValueError('Expected cirnet-simulator==0.1.2.')
     if not artifact.read_text('WHEEL') or not artifact.read_text('RECORD'):
         raise ValueError('Simulator distribution is shadowed by source metadata.')
     direct=json.loads(artifact.read_text('direct_url.json') or '{}')
