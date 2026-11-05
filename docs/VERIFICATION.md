@@ -1,5 +1,16 @@
 # Simulator verification
 
+## 2026-11-05 Node 26 LTS CI baseline
+
+Current CI selects Node 26 LTS before allocator bootstrap. Both tests in
+`tests/test_bootstrap_environment.py` pass with portable Node 26.13.0 on PATH;
+actionlint 1.7.12 passes the workflow with `-shellcheck= -pyflakes=`. This changes
+the verification toolchain only. Runtime Python source, dependency locks and
+published artifacts are unchanged. The full installed-wheel/backend gate and
+hosted Actions are NOT_RUN for this policy change. Historical results below
+retain their recorded Node versions. Evidence was inspected in the shared
+external session owned by `cirnet-node26-compat-20261105`.
+
 Current repository identity is [CIRNETLAB/CIRNET-Simulator](https://github.com/CIRNETLAB/CIRNET-Simulator); local `net-Circuit-*` directory names and dated extraction/provenance records remain valid. Current-source CI builds the renamed Contracts wheel from the exact Git commit and SHA256 source archive in `integration/ci-source-dependencies.json`. Keep immutable v0.1.1 source/tag/artifact provenance separate from candidates rebuilt after documentation or package metadata changes. Pass `-B` explicitly to isolated Python tests because `-I` ignores the environment's bytecode setting.
 
 Select the exact `cirnet-contracts==0.1.1` and DEV 1.0.0a1 wheel artifacts by SHA256 in a fresh environment. scripts/bootstrap_contract_tools.py, artifact_download.py, contracts_artifact.py and allocator adapters originate from Remote revision 25d2e6784035f6a8165142f8a8e03c4534512bcc. DEV source uses `cirnet-artifact-paths` and `cirnet_artifact_paths`; the exact reviewed lock still selects the immutable legacy `netcircuit-artifact-paths` wheel. The canonical allocator implementation belongs exclusively to that installed DEV artifact; these adapters validate and delegate to it. Canonical DEV selection requires a matching reviewed wheel/Node lock.
