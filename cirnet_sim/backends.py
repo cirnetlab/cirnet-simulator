@@ -166,38 +166,57 @@ class NgspiceBackend:
     def preview(self,graph):return _unavailable(graph)
 
 
+def _builtins(include_cpp):
+    providers = (LegacyBackend(), NgspiceBackend())
+    if not include_cpp:
+        return BackendRegistry(providers)
+    from .cpp_backend import configured_cpp_backend
+    cpp = configured_cpp_backend()
+    return BackendRegistry(providers if cpp is None else (*providers, cpp))
+
+
 def default_registry():
-    """Code-owned built-ins; extensions require explicit composition in each worker."""
-    return BackendRegistry((LegacyBackend(),NgspiceBackend()))
+    """Code-owned built-ins and an explicitly pinned optional C++ worker."""
+    return _builtins(include_cpp=True)
 
 
-def _registry(registry):
-    if registry is None:return default_registry()
+def close_native_workers():
+    """Reap optional native workers owned by the default service registry."""
+    from .cpp_backend import close_configured_cpp_backend
+    close_configured_cpp_backend()
+
+
+def _registry(registry, backend_id):
+    if registry is None:return _builtins(include_cpp=backend_id=='cpp')
     if not isinstance(registry,BackendRegistry):raise ValueError('Expected an explicitly composed BackendRegistry.')
     return registry
 
 
+def _selection(backend_id, registry):
+    value=getenv('CIRNET_SIMULATION_BACKEND','legacy') if backend_id is None else backend_id
+    return value,_registry(registry,value)
+
+
 def select_backend_id(value=None,*,registry=None):
     """Resolve configuration once at application/station creation, never in run_plan."""
-    value=getenv('CIRNET_SIMULATION_BACKEND','legacy') if value is None else value
-    selected=_registry(registry)
+    value,selected=_selection(value,registry)
     selected.get(value)
     return value
 
 
 def get_backend(backend_id=None,*,registry=None):
-    selected=_registry(registry)
-    return selected.get(select_backend_id(backend_id,registry=selected))
+    value,selected=_selection(backend_id,registry)
+    return selected.get(value)
 
 
 def get_backend_descriptor(backend_id=None,*,registry=None):
-    selected=_registry(registry)
-    return selected.descriptor(select_backend_id(backend_id,registry=selected))
+    value,selected=_selection(backend_id,registry)
+    return selected.descriptor(value)
 
 
 def compile_graph(graph,*,backend_id=None,registry=None):
-    selected=_registry(registry)
-    provider=get_backend(backend_id,registry=selected)
+    value,selected=_selection(backend_id,registry)
+    provider=selected.get(value)
     identity=provider.descriptor.identity
     if not provider.descriptor.available:return _unavailable(graph)
     payload=provider.compile(graph)
@@ -210,11 +229,16 @@ def compile_graph(graph,*,backend_id=None,registry=None):
     return plan
 
 
-def run_plan(plan,configuration,vectors=None,clock_config=None,inputs=None,*,registry=None):
+def run_plan(plan,configuration,vectors=None,clock_config=None,inputs=None,*,registry=None,cancel=None):
     """Execute only the identity carried by the plan; ambient selection is irrelevant."""
     if not isinstance(plan,CompiledPlan):raise SimulationError('BACKEND_PLAN_INVALID')
-    provider=_registry(registry).resolve(plan.backend)
+    provider=_registry(registry,plan.backend.id).resolve(plan.backend)
     if not provider.descriptor.available:return _unavailable()
+    if cancel is not None:
+        from .cpp_backend import CppBackend
+        if not isinstance(provider, CppBackend):
+            raise SimulationError('NOT_IMPLEMENTED')
+        return provider.execute(plan.payload,configuration,vectors,clock_config,inputs,cancel=cancel)
     return provider.execute(plan.payload,configuration,vectors,clock_config,inputs)
 
 

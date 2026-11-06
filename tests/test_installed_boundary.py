@@ -18,7 +18,11 @@ def test_installed_wheel_has_expected_identity_and_resources():
     result=probe()
     assert result.returncode==0,result.stderr
     data=json.loads(result.stdout)
-    assert data['simulator']['version']=='0.1.2' and data['simulator']['owned_files']==10
+    installed=distribution('cirnet-simulator')
+    native_modules={'cirnet_sim/cpp_backend.py','cirnet_sim/cpp_dc.py'}
+    selected={item.as_posix() for item in installed.files} & native_modules
+    assert selected in (set(),native_modules)
+    assert data['simulator']['version']=='0.1.2' and data['simulator']['owned_files']==10+len(selected)
     assert data['contracts']['name']=='cirnet-contracts'
     assert data['contracts']['version']=='0.1.2' and data['contracts']['owned_files']>0
 
@@ -139,4 +143,4 @@ def test_same_version_wheel_requires_selected_archive_and_force_install(tmp_path
     assert verified.returncode==0,verified.stderr
     data=json.loads(verified.stdout)
     assert data['simulator']['selected_sha256']==hashlib.sha256(candidate.read_bytes()).hexdigest()
-    assert data['simulator']['selected_files']==15
+    assert data['simulator']['selected_files']==len(payloads)

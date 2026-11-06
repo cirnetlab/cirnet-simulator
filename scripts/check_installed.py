@@ -17,6 +17,14 @@ except ModuleNotFoundError:
     from contracts_artifact import NAME as CONTRACTS_NAME, VERSION as CONTRACTS_VERSION, installed_provenance
 
 
+_LEGACY_RUNTIME = frozenset(
+    {'cirnet_sim/' + name + '.py' for name in
+     ('__init__', 'analog', 'circuit', 'dispatch', 'engine', 'logic', 'nets', 'waveform', 'backends')}
+    | {'netcircuit_sim/__init__.py'}
+)
+_CPP_RUNTIME = _LEGACY_RUNTIME | {'cirnet_sim/cpp_backend.py', 'cirnet_sim/cpp_dc.py'}
+
+
 def verify_selected_wheel(wheel, artifact):
     wheel=Path(wheel)
     if not wheel.is_absolute() or wheel.suffix!='.whl':
@@ -31,11 +39,12 @@ def verify_selected_wheel(wheel, artifact):
     if installed_digest!=digest:
         raise ValueError('Installed Simulator archive digest differs from the selected wheel; force reinstall the selected wheel.')
     prefix='cirnet_simulator-0.1.2.dist-info/'
-    expected={'cirnet_sim/'+name+'.py' for name in ('__init__','analog','circuit','dispatch','engine','logic','nets','waveform','backends')}
-    expected.add('netcircuit_sim/__init__.py')
-    expected.update(prefix+name for name in ('licenses/LICENSE','METADATA','WHEEL','top_level.txt','RECORD'))
+    metadata_files={prefix+name for name in ('licenses/LICENSE','METADATA','WHEEL','top_level.txt','RECORD')}
     with ZipFile(io.BytesIO(payload)) as archive:
-        if len(archive.namelist())!=len(expected) or set(archive.namelist())!=expected:
+        members=archive.namelist()
+        expected=set(members)
+        runtime = expected - metadata_files
+        if len(members) != len(expected) or not metadata_files <= expected or runtime not in (_LEGACY_RUNTIME, _CPP_RUNTIME):
             raise ValueError('Unexpected selected wheel payload inventory.')
         metadata=Parser().parsestr(archive.read(prefix+'METADATA').decode('utf-8'))
         if metadata['Name']!='cirnet-simulator' or metadata['Version']!='0.1.2':
@@ -84,8 +93,8 @@ def check_installed(*,wheel=None):
         if digest!=item.hash.value:
             raise ValueError('Simulator package differs from wheel RECORD: '+str(item))
         owned.append(str(item))
-    if set(owned)!=({'cirnet_sim/'+name+'.py' for name in ('__init__','analog','circuit','dispatch','engine','logic','nets','waveform','backends')} | {'netcircuit_sim/__init__.py'}):
-        raise ValueError('Expected the exact nine-module Simulator runtime and legacy import shim inventory.')
+    if set(owned) not in (_LEGACY_RUNTIME,_CPP_RUNTIME):
+        raise ValueError('Expected the exact released Simulator or C++ transition runtime inventory.')
     for name,module in tuple(sys.modules.items()):
         if name in ('cirnet_sim', 'netcircuit_sim') or name.startswith(('cirnet_sim.', 'netcircuit_sim.')):
             origin=getattr(module,'__file__',None)

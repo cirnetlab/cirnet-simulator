@@ -1,4 +1,6 @@
 include .gitignore .gitattributes README.md LICENSE AGENTS.md requirements-verification.lock
+include CMakeLists.txt
+recursive-include native *.cpp *.hpp
 recursive-include cirnet_sim *.py
 recursive-include netcircuit_sim *.py
 recursive-include tests *.py
