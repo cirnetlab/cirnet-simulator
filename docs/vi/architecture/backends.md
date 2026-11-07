@@ -58,7 +58,8 @@ Bộ mô phỏng sự kiện tiếp nhận đồ thị CircuitGraph 1.0, 1.1 và
 
 Thời gian được tính theo số nguyên nano giây. Độ trễ số mặc định 8 ns là giá trị mô hình phục vụ học tập. Đầu vào thả nổi giữ mức `X`. Bản ghi đo chứa các lần chuyển mức 0/1/X sau khi ổn định, trên tối đa bốn đầu dò được yêu cầu. Giới hạn mặc định là 1 ms, 100.000 sự kiện lập lịch và 100.000 mẫu thu. Giới hạn sự kiện có thể cấu hình tới 1.000.000. Giới hạn mẫu thu được tính riêng. Khi vượt một trong hai giới hạn, lần chạy thất bại và không trả kết quả bị cắt bớt.
 
-## Kế hoạch tích hợp ngspice
+## Bộ chọn ngspice dành cho tương lai
 
-Backend tương tự và tín hiệu hỗn hợp vẫn báo `UNAVAILABLE`. [Đề xuất tích hợp ngspice](ngspice-integration.md)
-ghi các đầu vào đã xác minh, ranh giới tiến trình dự kiến và tiêu chí nghiệm thu.
+Backend tương tự và tín hiệu hỗn hợp vẫn báo `UNAVAILABLE`.
+[Hồ sơ nghiên cứu ngspice](ngspice-integration.md) ghi đầu vào mã nguồn
+và mô hình đã xác minh cùng phạm vi kiểm tra.

@@ -1,8 +1,8 @@
 # Repository work
 
-Start with the [current English documentation](docs/en/index.md). Update its
-Vietnamese counterpart in the same documentation change.
-
-Read the [repository overview](README.md) and [verification guide](docs/en/contributing/verification.md) before changing source. Runtime models consume versioned Contracts. Do not copy canonical schemas or catalogs here. Preserve Lab-First safety and unavailable-model behavior.
-
-All logs, traces, raw diagnostics and temporary verification output must begin outside every checkout/worktree/Git directory using the pinned canonical DEV allocator. Only Markdown verification evidence belongs here. Inspect before guarded cleanup. Preserve source assets, historical Markdown, LICENSE and source provenance. Do not stage/commit/push without user authorization.
+- Start with the [English index](docs/en/index.md). After verification, update affected English and [Vietnamese](docs/vi/index.md) pages and the [changelog](docs/changelogs/README.md).
+- Keep each task plan only in `.superpowers/plans/` and its matching spec, acceptance criteria and progress checklist only in `.superpowers/specs/`. Keep open items as `- [ ]` and use `- [x]` only after verification.
+- Simulator owns deterministic digital and bounded DC models and private CNP1/CNP2 worker framing. Coordinate worker protocol changes with Hardware. Preserve the `legacy` default and Lab-First unavailable-model behavior, including zero samples for unavailable `ngspice`.
+- Use pinned Contracts artifacts and preserve the `cirnet_sim` and `netcircuit_sim` compatibility boundary. Keep canonical schemas and catalogs in Contracts, station lifecycles in Hardware and REST orchestration in Remote.
+- Follow the [verification guide](docs/en/contributing/verification.md). Generate raw evidence with the pinned DEV allocator outside every checkout, worktree and Git directory. List the owner and all participating roots. Keep Markdown evidence in the repo. Inspect evidence and clean only owned sessions.
+- Verify claims against source, Contracts and tests. Preserve assets, fixtures, licenses and historical evidence. Review Git diff, status and ignored outputs. Stage, commit, merge, push or publish only with explicit authorization.

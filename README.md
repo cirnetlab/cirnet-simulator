@@ -9,3 +9,5 @@ CIRNET Simulator runs deterministic digital and bounded DC models for CircuitGra
 - `ngspice` is a reserved, unavailable selector for future analog and mixed-signal execution.
 
 See [getting started](docs/en/guides/getting-started.md), [backend selection](docs/en/architecture/backends.md), and [verification](docs/en/contributing/verification.md).
+
+[Release changelog](docs/changelogs/README.md)

@@ -58,8 +58,8 @@ The event simulator accepts supported CircuitGraph 1.0, 1.1 and 1.2 graphs. The 
 
 Time is counted in integer nanoseconds. The 8 ns default digital delay is an educational model value. Floating inputs stay `X`. Captures record settled 0/1/X transitions on at most four requested probes. Default bounds are 1 ms, 100,000 scheduled events and 100,000 captured samples. The configurable scheduling limit reaches 1,000,000 events. The capture limit is independent. Exceeding either budget fails the run without truncating results.
 
-## Planned ngspice integration
+## Reserved ngspice selector
 
-The opt-in analog and mixed-signal backend remains `UNAVAILABLE`. The
-[ngspice integration proposal](ngspice-integration.md) records the verified
-source inputs, proposed process boundary and acceptance criteria.
+The analog and mixed-signal backend remains `UNAVAILABLE`. The
+[ngspice research record](ngspice-integration.md) identifies the verified
+source and model inputs and the scope of the checks.
