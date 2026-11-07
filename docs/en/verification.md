@@ -1,8 +1,19 @@
-# Verify the Simulator wheel
+# Verify CIRNET Simulator
 
 English · [Tiếng Việt](../vi/verification.md)
 
 [Documentation index](index.md)
+
+The producer [CI workflow](../../.github/workflows/simulator.yml) runs on
+Ubuntu for pushes to `master`, pull requests, and manual dispatch. It uses
+the pinned DEV tool and Contracts wheel, builds the Python wheel and sdist,
+verifies the installed wheel, runs `tests/` from an external directory, and
+uploads both archives for review. The native worker is built and tested in
+the separate opt-in procedure below. The wire tests skip without
+`CIRNET_TEST_CPP_WORKER` and the adapter tests require an explicit path
+argument to pytest.
+
+## Verify the installed Python wheel
 
 Use Node 26 and Python 3.14 to reproduce current CI. Activate a fresh Python environment outside all checkouts. Select the reviewed Contracts 0.1.2 wheel and the pinned DEV allocator. Run from the Simulator repository in PowerShell and replace the manifest path with a reviewed absolute path.
 
@@ -38,6 +49,39 @@ try {
 ~~~
 
 The installed check verifies the selected archive SHA256, installed RECORD, dependency identity and source separation. The tests cover model boundaries, unavailable backends, deterministic scheduling, and serialized plans in spawned workers. `-B` is explicit because `-I` ignores `PYTHONDONTWRITEBYTECODE`. Compare the wheel with an independent build from the extracted sdist at the same `SOURCE_DATE_EPOCH` before release.
+
+## Verify the C++ worker
+
+With the allocator session and installed Python environment above, run these
+commands from the Simulator checkout using CMake 3.21 or later and Visual
+Studio 2022 Build Tools. Stop at the first failure.
+
+~~~powershell
+$session = $env:CIRNET_ARTIFACTS_SESSION
+$source = (Get-Location).Path
+cmake -S . -B "$session/cpp" -G "Visual Studio 17 2022" -A x64
+cmake --build "$session/cpp" --config Release
+cmake --install "$session/cpp" --config Release --prefix "$session/cpp-install"
+$env:CIRNET_TEST_CPP_WORKER = "$session/cpp-install/bin/cirnet-simulator-worker.exe"
+$env:CIRNET_CPP_WORKER = $env:CIRNET_TEST_CPP_WORKER
+$env:CIRNET_CPP_WORKER_SHA256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $env:CIRNET_CPP_WORKER).Hash.ToLowerInvariant()
+Push-Location $session
+try {
+    python -I -B -m pytest -q "$source/tests/test_cpp_worker.py" --basetemp "$session/pytest-cpp-worker"
+    python -I -B -m pytest -q "$source/tests/native_cpp_backend_cases.py" --basetemp "$session/pytest-cpp-adapter"
+} finally { Pop-Location }
+~~~
+
+The [wire tests](../../tests/test_cpp_worker.py) exercise CNP1 and CNP2
+framing, model and budget boundaries, and process reuse. The [adapter
+tests](../../tests/native_cpp_backend_cases.py) check pinned worker identity,
+legacy result and NCAP parity, separate Run and preview pools, cancellation,
+and cleanup. The commands hash a local build for local verification. Use the
+reviewed digest from the candidate manifest when testing a selected worker.
+The runtime variables are `CIRNET_SIM_CPP_WORKER` and
+`CIRNET_SIM_CPP_WORKER_SHA256`. [Backend configuration](backends.md#experimental-c-worker)
+
+## Inspect and clean the session
 
 Store all logs and scratch files under the allocated session from the start. When several repositories participate, provide an explicit owner and every participating Git root in `CIRNET_ARTIFACTS_CONTEXT`. Inspect evidence before guarded cleanup. Preserve selected release artifacts separately.
 

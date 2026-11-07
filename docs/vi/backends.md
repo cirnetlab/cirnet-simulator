@@ -4,7 +4,20 @@
 
 [Mục lục tài liệu](index.md)
 
-`CIRNET_SIMULATION_BACKEND` chọn bộ điều hợp tích hợp khi tạo ứng dụng hoặc trạm. Mặc định là `legacy`, hỗ trợ các mô hình số và tập con DC hiện có. `ngspice` được dành cho tích hợp sau và báo `UNAVAILABLE`. Backend này không tạo mẫu và không khởi chạy chương trình gốc. Thiết lập chuẩn được ưu tiên hơn `NETCIRCUIT_SIMULATION_BACKEND`. Thuộc tính đồ thị không thể chọn bộ điều hợp.
+`CIRNET_SIMULATION_BACKEND` chọn bộ điều hợp tích hợp khi tạo ứng dụng
+hoặc trạm. Thiết lập này được ưu tiên hơn `NETCIRCUIT_SIMULATION_BACKEND`.
+Thuộc tính đồ thị không thể chọn bộ điều hợp.
+
+| Giá trị | Khả dụng |
+| --- | --- |
+| `legacy` | Mặc định. Hỗ trợ mô hình số tất định và tập con DC giới hạn. |
+| `cpp` | Bật riêng trong mã nguồn hiện tại. Cần worker C++ được chọn riêng và mã SHA-256 của worker. |
+| `ngspice` | Dành cho tương lai và báo `UNAVAILABLE`. Báo không có kênh và không tạo mẫu. |
+
+[Cấu hình CIRNET 0.1.4 đã công bố](https://github.com/cirnetlab/cirnet-remote/blob/38aea6120920f48cea817827ac2277cce4bef25e/integration/release-set.json) chọn `legacy`. Tổ hợp r7
+giai đoạn 1 riêng đã đạt Gate 1 trên Windows x64 với `cpp`. SPICE và HIL
+vật lý vẫn ở trạng thái `NOT RUN` với ứng viên đó.
+[Kết quả Gate 1](https://github.com/cirnetlab/cirnet-remote/blob/13a35145b6d15644c7be10d95a5410bf69e11867/docs/vi/architecture/native-migration.md#quyết-định-gate-1-trên-windows-x64)
 
 Mã ứng dụng xác định ID một lần bằng `cirnet_sim.backends.select_backend_id()`. Truyền ID vào `compile_graph(graph, backend_id=...)` và `preview_physical_graph(graph, backend_id=...)`. Kiểm tra trạng thái khả dụng trước khi thực thi. Kế hoạch đã biên dịch mang ID backend, phiên bản bộ điều hợp và định dạng kế hoạch. Hàm `run_plan(plan, configuration, vectors, clock_config, inputs)` của tiến trình thực thi tra theo định danh cố định này. Nếu thiếu hoặc sai nhà cung cấp, thao tác thất bại. Hardware dùng ánh xạ chỉ đọc `.directions` để xét cho phép chạy.
 
@@ -14,7 +27,13 @@ Mã ứng dụng tin cậy có thể cung cấp `BackendRegistry` với danh sá
 
 ## Worker C++ thử nghiệm
 
-Để chọn adapter này ở Remote và Hardware, đặt `CIRNET_SIMULATION_BACKEND=cpp`, `CIRNET_SIM_CPP_WORKER` là đường dẫn tuyệt đối đến worker và `CIRNET_SIM_CPP_WORKER_SHA256` là digest của artifact đã chọn. Host kiểm tra worker trước khi khởi chạy. Backend `cpp` báo không khả dụng nếu thiếu hoặc sai thông tin ghim. Mã tích hợp cũng có thể đưa `CppBackend` từ `cirnet_sim.cpp_backend` vào một `BackendRegistry` tường minh.
+Để chọn bộ điều hợp này ở Remote và Hardware, đặt
+`CIRNET_SIMULATION_BACKEND=cpp`, `CIRNET_SIM_CPP_WORKER` thành đường dẫn
+tuyệt đối tới binary và `CIRNET_SIM_CPP_WORKER_SHA256` thành mã băm của
+artifact đã chọn. Cần cả hai giá trị ghim để đăng ký backend. Giá trị sai
+định dạng làm cấu hình thất bại. Tệp không đọc được hoặc sai mã băm làm worker
+khởi chạy thất bại. Mã ứng dụng tin cậy cũng có thể thêm `CppBackend` từ
+`cirnet_sim.cpp_backend` vào `BackendRegistry` tường minh.
 
 Run và preview dùng hai pool riêng. Pool Run lấy số slot từ `CIRNET_SIMULATION_WORKERS`, mặc định bốn tác vụ, với deadline IPC 10 giây. Pool preview nhận một tác vụ với deadline IPC hai giây. Host từ chối yêu cầu ngay khi hết slot. Mỗi slot tái sử dụng một tiến trình riêng. Host thu hồi tiến trình khi hết hạn, hủy tác vụ, worker thoát hoặc trả phản hồi sai. Hardware chờ tác vụ Run đã hủy dọn dẹp xong rồi mới xác nhận Stop hoặc reset an toàn. Để chuyển về `legacy`, dừng công việc đang chạy và khởi động lại các dịch vụ với cấu hình tương ứng.
 
@@ -31,15 +50,7 @@ Vòng lặp sự kiện số dùng ba mức 0, 1 và chưa biết. Preview đặ
 
 Worker kiểm tra giới hạn sự kiện và mẫu đo, đồng thời áp giới hạn bộ nhớ 256 MiB cho mỗi tiến trình ở cấp hệ điều hành. Profile phát hành mặc định chọn `legacy`.
 
-Build và cài chương trình C++20 trong thư mục ngoài Git do allocator cấp. Các lệnh sau dùng Visual Studio 2022 Build Tools trên Windows.
-
-```powershell
-cmake -S . -B "$env:CIRNET_ARTIFACTS_SESSION/cpp" -G "Visual Studio 17 2022" -A x64
-cmake --build "$env:CIRNET_ARTIFACTS_SESSION/cpp" --config Release
-cmake --install "$env:CIRNET_ARTIFACTS_SESSION/cpp" --config Release --prefix "$env:CIRNET_ARTIFACTS_SESSION/cpp-install"
-$env:CIRNET_TEST_CPP_WORKER = "$env:CIRNET_ARTIFACTS_SESSION/cpp-install/bin/cirnet-simulator-worker.exe"
-python -B -m pytest -q tests/test_cpp_worker.py --basetemp "$env:CIRNET_ARTIFACTS_SESSION/pytest-cpp-worker"
-```
+Xem [cách dựng và kiểm chứng worker C++](verification.md#kiểm-chứng-worker-c).
 
 ## Kế hoạch tích hợp ngspice
 

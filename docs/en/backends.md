@@ -4,7 +4,20 @@ English · [Tiếng Việt](../vi/backends.md)
 
 [Documentation index](index.md)
 
-`CIRNET_SIMULATION_BACKEND` selects the built-in adapter at application or station creation. The default is `legacy`, which handles existing digital and bounded DC models. `ngspice` is reserved and reports `UNAVAILABLE`. It produces no samples and launches no native executable. The canonical setting takes precedence over `NETCIRCUIT_SIMULATION_BACKEND`. Graph properties cannot choose an adapter.
+`CIRNET_SIMULATION_BACKEND` selects the built-in adapter at application or
+station creation. It takes precedence over `NETCIRCUIT_SIMULATION_BACKEND`.
+Graph properties cannot choose an adapter.
+
+| Selector | Availability |
+| --- | --- |
+| `legacy` | Default. Supports deterministic digital and bounded DC models. |
+| `cpp` | Opt-in in current source. Requires a separately selected C++ worker and its SHA-256. |
+| `ngspice` | Reserved and `UNAVAILABLE`. Reports zero channels and produces no samples. |
+
+The [published CIRNET 0.1.4 profile](https://github.com/cirnetlab/cirnet-remote/blob/38aea6120920f48cea817827ac2277cce4bef25e/integration/release-set.json) selects `legacy`. The separate
+Stage 1 r7 combination passed Gate 1 on Windows x64 with `cpp`. SPICE and
+physical HIL remain `NOT RUN` for that candidate.
+[Gate 1 decision](https://github.com/cirnetlab/cirnet-remote/blob/13a35145b6d15644c7be10d95a5410bf69e11867/docs/en/architecture/native-migration.md#gate-1-decision-for-windows-x64)
 
 Application code resolves the ID once with `cirnet_sim.backends.select_backend_id()`. Pass it to `compile_graph(graph, backend_id=...)` and `preview_physical_graph(graph, backend_id=...)`. Check availability before execution. A compiled plan carries the backend ID, adapter version and plan format. The worker’s `run_plan(plan, configuration, vectors, clock_config, inputs)` resolves this frozen identity. Missing or mismatched providers fail rather than falling back. Hardware admission uses the read-only `.directions` mapping.
 
@@ -14,7 +27,13 @@ For rollback within this release, select `legacy`. To restore an earlier artifac
 
 ## Experimental C++ worker
 
-To select this adapter in Remote and Hardware, set `CIRNET_SIMULATION_BACKEND=cpp`, `CIRNET_SIM_CPP_WORKER` to the absolute executable path, and `CIRNET_SIM_CPP_WORKER_SHA256` to the digest from the selected artifact. The host verifies the executable before launching it. Invalid or missing pins make `cpp` unavailable. An explicit `BackendRegistry` can also take a `CppBackend` from `cirnet_sim.cpp_backend`.
+To select this adapter in Remote and Hardware, set
+`CIRNET_SIMULATION_BACKEND=cpp`, `CIRNET_SIM_CPP_WORKER` to the absolute
+executable path, and `CIRNET_SIM_CPP_WORKER_SHA256` to the digest from the
+selected artifact. Both pins are required for registration. Malformed pins
+fail configuration. Unreadable files and digest mismatches fail worker
+startup. Trusted application code can also add `CppBackend` from
+`cirnet_sim.cpp_backend` to an explicit `BackendRegistry`.
 
 Run and preview maintain separate pools. The configured Run pool follows `CIRNET_SIMULATION_WORKERS`, defaults to four jobs and uses a 10-second IPC deadline. Preview admits one job with a two-second IPC deadline. Admission is immediate and rejects work when all slots are busy. Each lane reuses its own process. Timeout, cancellation, worker exit or an invalid reply discards that process. Hardware waits for a cancelled Run to finish cleanup before acknowledging safe Stop or reset. Switch the services back to `legacy` after stopping active work and restarting the processes.
 
@@ -31,15 +50,7 @@ The digital event loop uses 0, 1 and unknown. Preview sets gate delays to zero a
 
 The worker checks event and sample limits and uses an operating-system memory limit of 256 MiB per process. The default release profile selects `legacy`.
 
-Build and install the C++20 executable in an allocator-owned external directory. These commands use Visual Studio 2022 Build Tools on Windows.
-
-```powershell
-cmake -S . -B "$env:CIRNET_ARTIFACTS_SESSION/cpp" -G "Visual Studio 17 2022" -A x64
-cmake --build "$env:CIRNET_ARTIFACTS_SESSION/cpp" --config Release
-cmake --install "$env:CIRNET_ARTIFACTS_SESSION/cpp" --config Release --prefix "$env:CIRNET_ARTIFACTS_SESSION/cpp-install"
-$env:CIRNET_TEST_CPP_WORKER = "$env:CIRNET_ARTIFACTS_SESSION/cpp-install/bin/cirnet-simulator-worker.exe"
-python -B -m pytest -q tests/test_cpp_worker.py --basetemp "$env:CIRNET_ARTIFACTS_SESSION/pytest-cpp-worker"
-```
+See the [C++ worker build and verification steps](verification.md#verify-the-c-worker).
 
 ## Planned ngspice integration
 
