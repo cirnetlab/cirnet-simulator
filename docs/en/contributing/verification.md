@@ -1,10 +1,10 @@
 # Verify CIRNET Simulator
 
-English · [Tiếng Việt](../vi/verification.md)
+English · [Tiếng Việt](../../vi/contributing/verification.md)
 
-[Documentation index](index.md)
+[Documentation index](../index.md)
 
-The producer [CI workflow](../../.github/workflows/simulator.yml) runs on
+The producer [CI workflow](../../../.github/workflows/simulator.yml) runs on
 Ubuntu for pushes to `master`, pull requests, and manual dispatch. It uses
 the pinned DEV tool and Contracts wheel, builds the Python wheel and sdist,
 verifies the installed wheel, runs `tests/` from an external directory, and
@@ -72,14 +72,14 @@ try {
 } finally { Pop-Location }
 ~~~
 
-The [wire tests](../../tests/test_cpp_worker.py) exercise CNP1 and CNP2
+The [wire tests](../../../tests/test_cpp_worker.py) exercise CNP1 and CNP2
 framing, model and budget boundaries, and process reuse. The [adapter
 tests](../../tests/native_cpp_backend_cases.py) check pinned worker identity,
 legacy result and NCAP parity, separate Run and preview pools, cancellation,
 and cleanup. The commands hash a local build for local verification. Use the
 reviewed digest from the candidate manifest when testing a selected worker.
 The runtime variables are `CIRNET_SIM_CPP_WORKER` and
-`CIRNET_SIM_CPP_WORKER_SHA256`. [Backend configuration](backends.md#experimental-c-worker)
+`CIRNET_SIM_CPP_WORKER_SHA256`. [Backend configuration](../architecture/backends.md#experimental-c-worker)
 
 ## Inspect and clean the session
 
@@ -89,4 +89,4 @@ Store all logs and scratch files under the allocated session from the start. Whe
 node scripts/artifact-paths.mjs --cleanup $env:CIRNET_ARTIFACTS_SESSION
 ~~~
 
-See the [CI workflow](../../.github/workflows/simulator.yml) and the [dated record](../VERIFICATION.md). These gates verify installed simulation software. Remote owns integrated API and Hardware execution checks.
+See the [CI workflow](../../../.github/workflows/simulator.yml) and the [dated record](../history/verification-ledger.md). These gates verify installed simulation software. Remote owns integrated API and Hardware execution checks.

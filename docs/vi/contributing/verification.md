@@ -1,10 +1,10 @@
 # Kiểm chứng CIRNET Simulator
 
-[English](../en/verification.md) · Tiếng Việt
+[English](../../en/contributing/verification.md) · Tiếng Việt
 
-[Mục lục tài liệu](index.md)
+[Mục lục tài liệu](../index.md)
 
-[Quy trình CI](../../.github/workflows/simulator.yml) của kho chạy trên
+[Quy trình CI](../../../.github/workflows/simulator.yml) của kho chạy trên
 Ubuntu khi push lên `master`, mở pull request hoặc chạy thủ công. CI dùng
 công cụ DEV và wheel Contracts đã ghim, dựng wheel và sdist Python, xác minh
 wheel đã cài, chạy `tests/` từ thư mục ngoài kho và tải cả hai gói lên để rà
@@ -71,14 +71,14 @@ try {
 } finally { Pop-Location }
 ~~~
 
-[Bộ kiểm thử giao thức](../../tests/test_cpp_worker.py) kiểm tra frame CNP1
+[Bộ kiểm thử giao thức](../../../tests/test_cpp_worker.py) kiểm tra frame CNP1
 và CNP2, ranh giới mô hình và giới hạn tài nguyên, cùng khả năng tái sử dụng
-tiến trình. [Bộ kiểm thử bộ điều hợp](../../tests/native_cpp_backend_cases.py)
+tiến trình. [Bộ kiểm thử bộ điều hợp](../../../tests/native_cpp_backend_cases.py)
 kiểm tra định danh worker đã ghim, kết quả và NCAP tương đương với `legacy`,
 pool Run và preview riêng, hủy tác vụ và dọn dẹp. Các lệnh lấy mã băm của bản
 dựng cục bộ để kiểm thử tại chỗ. Khi kiểm thử worker đã chọn, dùng mã băm đã
 rà soát từ manifest ứng viên. Biến cấu hình runtime là `CIRNET_SIM_CPP_WORKER`
-và `CIRNET_SIM_CPP_WORKER_SHA256`. [Cấu hình backend](backends.md#worker-c-thử-nghiệm)
+và `CIRNET_SIM_CPP_WORKER_SHA256`. [Cấu hình backend](../architecture/backends.md#worker-c-thử-nghiệm)
 
 ## Kiểm tra và dọn phiên
 
@@ -88,4 +88,4 @@ Lưu mọi nhật ký và tệp tạm trong phiên được cấp phát ngay t�
 node scripts/artifact-paths.mjs --cleanup $env:CIRNET_ARTIFACTS_SESSION
 ~~~
 
-Xem [quy trình CI](../../.github/workflows/simulator.yml) và [hồ sơ theo ngày](../VERIFICATION.md). Các bước này kiểm chứng phần mềm mô phỏng đã cài. Remote phụ trách kiểm tra API và thực thi Hardware tích hợp.
+Xem [quy trình CI](../../../.github/workflows/simulator.yml) và [hồ sơ theo ngày](../../en/history/verification-ledger.md). Các bước này kiểm chứng phần mềm mô phỏng đã cài. Remote phụ trách kiểm tra API và thực thi Hardware tích hợp.

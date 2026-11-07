@@ -8,4 +8,4 @@ CIRNET Simulator runs deterministic digital and bounded DC models for CircuitGra
 - `cpp` is an opt-in digital and bounded DC backend in current source. It requires a separately selected C++ worker and its SHA-256. The r7 candidate passed Gate 1 on Windows x64. [Gate 1 decision](https://github.com/cirnetlab/cirnet-remote/blob/13a35145b6d15644c7be10d95a5410bf69e11867/docs/en/architecture/native-migration.md#gate-1-decision-for-windows-x64)
 - `ngspice` is a reserved, unavailable selector for future analog and mixed-signal execution.
 
-See [getting started](docs/en/getting-started.md), [backend selection](docs/en/backends.md), and [verification](docs/en/verification.md).
+See [getting started](docs/en/guides/getting-started.md), [backend selection](docs/en/architecture/backends.md), and [verification](docs/en/contributing/verification.md).
