@@ -1,0 +1,7 @@
+/.superpowers/
+/build/
+/out/
+/install/
+__pycache__/
+.pytest_cache/
+*.py[cod]
