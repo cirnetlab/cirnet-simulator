@@ -8,6 +8,8 @@ Simulator sở hữu kết quả mô phỏng số, DC giới hạn và frame n�
 
 `cirnet-simulator-worker --protocols` liệt kê CNP1 và CNP2. Tiến trình được giám sát chạy với `--serve` để xử lý tuần tự qua stdin/stdout. Chế độ một lần đọc một frame rồi đến EOF. Frame bắt đầu bằng trường độ dài 32 bit little-endian và mang tải tin tối đa 16 MiB. Yêu cầu gồm mã giao thức, ID yêu cầu và thế hệ, thời lượng theo nano giây, giới hạn sự kiện và số bản ghi. Phản hồi lặp lại mã giao thức và hai ID.
 
+Worker là một [target CMake dùng C++20](../../../CMakeLists.txt). [Điểm vào của tiến trình](../../../src/worker/worker.cpp) xử lý khung CNP và chuyển việc tính toán cho [bộ mô phỏng sự kiện số](../../../src/worker/worker_digital.cpp) và [bộ giải DC giới hạn](../../../src/worker/worker_dc.hpp). [Giới hạn tiến trình](../../../src/worker/worker_limits.hpp) được áp dụng trước khi xử lý yêu cầu. Chạy [bộ kiểm thử hồi quy worker](../../../tests/test_cpp_worker.py) với tệp thực thi đã cài đặt.
+
 | Giao thức | Đầu vào | Phản hồi thành công |
 | --- | --- | --- |
 | CNP1 | Cạnh có hướng, cổng lý tưởng, sự kiện đầu vào và đầu dò | Mẫu đầu dò theo thứ tự |

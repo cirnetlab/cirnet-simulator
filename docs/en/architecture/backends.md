@@ -8,6 +8,8 @@ Simulator owns simulated digital and bounded DC results and private CNP1/CNP2 fr
 
 `cirnet-simulator-worker --protocols` lists CNP1 and CNP2. The supervised process runs with `--serve` to handle requests sequentially over stdin/stdout. One-shot mode reads one frame followed by EOF. The frame starts with a little-endian 32-bit length and carries a payload of up to 16 MiB. A request contains the protocol tag, request and generation IDs, duration in nanoseconds, event limit and record counts. The reply echoes the tag and both IDs.
 
+The worker is a single [C++20 CMake target](../../../CMakeLists.txt). The [process entry point](../../../src/worker/worker.cpp) handles CNP framing and dispatches to the [digital event solver](../../../src/worker/worker_digital.cpp) and the [bounded DC solver](../../../src/worker/worker_dc.hpp). The [process limits](../../../src/worker/worker_limits.hpp) apply before request handling. Run the [worker regression suite](../../../tests/test_cpp_worker.py) against the installed executable.
+
 | Protocol | Input | Successful response |
 | --- | --- | --- |
 | CNP1 | Directed edges, ideal gates, input events and probes | Ordered probe samples |
