@@ -4,7 +4,7 @@
 
 Simulator sở hữu kết quả mô phỏng số, DC giới hạn và frame nội bộ CNP1/CNP2. Contracts sở hữu CircuitGraph và NCAP. Hardware xác thực và chuyển đổi kế hoạch, đối chiếu hash tệp thực thi, giám sát worker và mã hóa kết quả. Remote sở hữu việc điều phối và chọn bản phát hành.
 
-[CIRNET Lab-First](https://github.com/cirnetlab/cirnet-remote-next/blob/master/docs/cirnet-architecture-lab-first-vi.md) xác định các giai đoạn thực thi và tiêu chí nghiệm thu đích.
+[CIRNET Lab-First](https://github.com/cirnetlab/cirnet-remote/blob/master/docs/cirnet-architecture-lab-first-vi.md) xác định các giai đoạn thực thi và tiêu chí nghiệm thu đích.
 
 `cirnet-simulator-worker --protocols` liệt kê CNP1 và CNP2. Tiến trình được giám sát chạy với `--serve` để xử lý tuần tự qua stdin/stdout. Chế độ một lần đọc một frame rồi đến EOF. Frame bắt đầu bằng trường độ dài 32 bit little-endian và mang tải tin tối đa 16 MiB. Yêu cầu gồm mã giao thức, ID yêu cầu và thế hệ, thời lượng theo nano giây, giới hạn sự kiện và số bản ghi. Phản hồi lặp lại mã giao thức và hai ID.
 
