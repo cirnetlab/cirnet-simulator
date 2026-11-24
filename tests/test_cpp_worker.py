@@ -1,7 +1,8 @@
-"""Exercise the private CNP1 protocol through the native worker executable."""
+"""Exercise the private CNP1/CNP2 protocols through the native worker executable."""
 
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from hashlib import file_digest
 import os
 from pathlib import Path
 from struct import Struct
@@ -32,7 +33,13 @@ def worker():
     selection = os.environ.get('CIRNET_TEST_CPP_WORKER')
     if selection is None:
         pytest.skip('Set CIRNET_TEST_CPP_WORKER to run the native worker gate.')
-    return Path(selection)
+    path = Path(selection)
+    assert path.is_absolute() and path.is_file(), f'Native worker is missing: {path}'
+    expected = os.environ.get('CIRNET_TEST_CPP_WORKER_SHA256')
+    if expected is not None:
+        with path.open('rb') as binary:
+            assert file_digest(binary, 'sha256').hexdigest() == expected, 'Native worker digest mismatch.'
+    return path
 
 
 def test_worker_declares_supported_protocols(worker):
@@ -137,6 +144,27 @@ def test_or_and_xor_do_not_treat_unknown_as_a_binary_level(worker):
     assert reply(worker, body) == (0, [(2, 0, 1), (3, 0, 2), (3, 2, 0), (3, 3, 1)])
 
 
+def test_breadboard_net_projection_preserves_branch_capture_and_gate_delay(worker):
+    # Hardware projects a resolved breadboard net to a single driver and fan-out.
+    body = request(signals=7, edges=[(0, 1), (0, 2), (0, 3), (0, 4), (5, 6)],
+                   devices=[(3, 3, 0, 5, 8)], inputs=[(0, 0, 0), (10, 0, 1)],
+                   probes=[6, 5, 4, 3])
+    assert reply(worker, body) == (0, [
+        (6, 0, 2), (5, 0, 2), (4, 0, 0), (3, 0, 0),
+        (6, 8, 1), (5, 8, 1), (4, 10, 1), (3, 10, 1),
+        (6, 18, 0), (5, 18, 0),
+    ])
+
+
+@pytest.mark.parametrize('budget, status', [(7, 0), (6, 2)])
+def test_preexpanded_odd_clock_and_same_time_vector_honor_exact_budget(worker, budget, status):
+    # The plan producer emits clock edges before vectors at equal timestamps.
+    events = [(0, 0, 0), (2, 0, 1), (2, 0, 0), (5, 0, 0), (7, 0, 1), (10, 0, 0), (12, 0, 1)]
+    body = request(duration=12, limit=budget, signals=1, inputs=events, probes=[0])
+    samples = [(0, 0, 0), (0, 7, 1), (0, 10, 0), (0, 12, 1)] if status == 0 else []
+    assert reply(worker, body) == (status, samples)
+
+
 def test_event_limit_counts_internal_feedback_without_partial_success(worker):
     body = request(limit=12, signals=2, edges=[(1, 0)], devices=[(3, 0, 0, 1, 0)],
                    inputs=[(0, 0, 0)], probes=[1])
@@ -157,6 +185,7 @@ def test_capture_limit_is_independent_from_event_limit(worker, count):
 
 @pytest.mark.parametrize('body', [
     request(signals=1, edges=[(0, 1)]),
+    request(signals=3, edges=[(0, 2), (1, 2)]),
     request(signals=1, devices=[(4, 0, 0, 0, 0)]),
     request(signals=1, inputs=[(0, 0, 2)]),
     request(signals=1, inputs=[(41, 0, 1)]),
@@ -273,6 +302,45 @@ def test_dc_resistor_led_branch_uses_final_driven_level(worker, input_events, ex
     reply_status, samples, pins, leds = parse_dc_reply(reply_body(worker, body))
     assert (reply_status, samples, pins) == (0, [], expected_pins)
     assert len(leds) == 1 and leds[0][0] == status and leds[0][1] == pytest.approx(current)
+
+
+def test_dc_quad_gate_keeps_legacy_pin_mapping_and_same_time_probe_order(worker):
+    # Indexed CNP2 projection of the four 74HC08 gates in legacy case
+    # test_all_four_powered_gates_keep_pin_mapping_and_same_time_order.
+    body = dc_request(signals=7, devices=[
+        (0, 0, 1, 3, 8, 1), (0, 0, 2, 4, 8, 1),
+        (0, 0, 1, 5, 8, 1), (0, 0, 2, 6, 8, 1),
+    ], inputs=[(0, 0, 1), (0, 1, 1), (0, 2, 0), (10, 1, 0), (10, 2, 1)],
+        probes=[6, 3, 5, 4])
+    status, samples, pins, leds = parse_dc_reply(reply_body(worker, body))
+    assert (status, pins, leds) == (0, [1, 0, 1, 0, 1, 0, 1], [])
+    assert samples == [
+        (6, 0, 2), (3, 0, 2), (5, 0, 2), (4, 0, 2),
+        (6, 8, 0), (3, 8, 1), (5, 8, 1), (4, 8, 0),
+        (6, 18, 1), (3, 18, 0), (5, 18, 0), (4, 18, 1),
+    ]
+
+
+@pytest.mark.parametrize('powered, closed, resistance, final, led_status, current', [
+    (True, True, 330.0, 1, 6, 3.0 / 330.0),
+    (False, True, 330.0, 2, 0, 0.0),
+    (True, True, 1.0, 1, 7, 3.0),
+    (True, False, 330.0, 1, 0, 0.0),
+])
+def test_dc_gate_and_led_match_legacy_power_and_load_cases(
+    worker, powered, closed, resistance, final, led_status, current,
+):
+    body = dc_request(signals=3, devices=[(0, 0, 1, 2, 8, int(powered))],
+                      inputs=[(0, 0, 1), (0, 1, 1)], probes=[2], nodes=3,
+                      potentials=[(2, 20, 0.0)] if closed else [],
+                      resistors=[(0, 1, resistance)],
+                      drivers=[(2, 0, 20, 0.0, 5.0)] if powered else [],
+                      leds=[(1, 2, 2.0, 0.02)])
+    status, samples, pins, leds = parse_dc_reply(reply_body(worker, body))
+    assert (status, pins) == (0, [1, 1, final])
+    assert samples == ([(2, 0, 2), (2, 8, 1)] if powered else [(2, 0, 2)])
+    assert len(leds) == 1
+    assert leds[0] == (led_status, pytest.approx(current))
 
 
 @pytest.mark.parametrize('extra_source, status, current', [

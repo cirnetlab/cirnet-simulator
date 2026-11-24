@@ -11,6 +11,7 @@ cmake -S . -B "$output/build" -G 'Visual Studio 17 2022' -A x64
 cmake --build "$output/build" --config Release
 cmake --install "$output/build" --config Release --prefix "$output/install"
 $env:CIRNET_TEST_CPP_WORKER = "$output/install/bin/cirnet-simulator-worker.exe"
+$env:CIRNET_TEST_CPP_WORKER_SHA256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $env:CIRNET_TEST_CPP_WORKER).Hash.ToLowerInvariant()
 & $env:CIRNET_TEST_CPP_WORKER --version
 & $env:CIRNET_TEST_CPP_WORKER --protocols
 python -m venv "$output/venv"
@@ -20,4 +21,4 @@ $python = "$output/venv/Scripts/python.exe"
 Get-FileHash -Algorithm SHA256 -LiteralPath $env:CIRNET_TEST_CPP_WORKER
 ~~~
 
-Python chạy bộ kiểm thử. Worker đã cài thực thi độc lập. Bộ kiểm thử bao quát tín hiệu số, DC giới hạn, đầu vào sai, giới hạn sự kiện và thu mẫu, cùng tính cô lập giữa các yêu cầu. Remote kiểm chứng artifact của worker cho ứng viên hệ thống tích hợp.
+Python chạy bộ kiểm thử. Worker đã cài thực thi độc lập. Bộ kiểm thử bao quát tín hiệu số, phân nhánh trên mạng breadboard, giới hạn sự kiện chính xác khi đầu vào đổi đồng thời, thứ tự thu tín hiệu của bốn cổng được cấp nguồn, trạng thái LED trong mô hình DC giới hạn, đầu vào sai, giới hạn thu mẫu và tính cô lập giữa các yêu cầu. Kết quả mong đợi về cấp nguồn và thời gian lấy từ các ca tham chiếu ngoại tuyến trong `cirnet-simulator` tại `7cdee6420a204f9b0cd2120ff9e65ee5ffd52b1c` (`migration/python-reference/tests/native_cpp_backend_cases.py`). Hardware kiểm chứng biên dịch đồ thị, phân giải vị trí và giám sát worker tại ranh giới tích hợp. Remote kiểm chứng artifact của worker cho ứng viên hệ thống tích hợp.
