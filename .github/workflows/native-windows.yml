@@ -1,0 +1,52 @@
+name: Windows native Simulator
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      retain_candidate:
+        description: Retain the verified worker for an integration handoff
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  worker:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.4'
+      - name: Build and verify the installed worker
+        env:
+          OUTPUT: ${{ runner.temp }}/simulator-next
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $output = $env:OUTPUT
+          New-Item -ItemType Directory -Path "$output/tmp" | Out-Null
+          $env:TMP = $env:TEMP = $env:TMPDIR = "$output/tmp"
+          cmake -S . -B "$output/build" -G 'Visual Studio 17 2022' -A x64
+          cmake --build "$output/build" --config Release
+          cmake --install "$output/build" --config Release --prefix "$output/install"
+          $env:CIRNET_TEST_CPP_WORKER = "$output/install/bin/cirnet-simulator-worker.exe"
+          $env:CIRNET_TEST_CPP_WORKER_SHA256 = (Get-FileHash -LiteralPath $env:CIRNET_TEST_CPP_WORKER -Algorithm SHA256).Hash.ToLowerInvariant()
+          & $env:CIRNET_TEST_CPP_WORKER --version
+          python -m venv "$output/venv"
+          $python = "$output/venv/Scripts/python.exe"
+          & $python -m pip install --cache-dir "$output/pip-cache" --require-hashes --only-binary=:all: -r requirements-verification.lock
+          & $python -B -m pytest -q -p no:cacheprovider --basetemp "$output/pytest" tests
+          "$env:CIRNET_TEST_CPP_WORKER_SHA256  cirnet-simulator-worker.exe" | Set-Content -Encoding ascii "$env:CIRNET_TEST_CPP_WORKER.sha256"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && inputs.retain_candidate
+        with:
+          name: simulator-next-native-windows-x64
+          path: ${{ runner.temp }}/simulator-next/install/bin
+          if-no-files-found: error
+          retention-days: 7
