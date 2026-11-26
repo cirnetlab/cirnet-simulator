@@ -4,9 +4,12 @@
 
 Dùng CMake 3.21 trở lên và trình biên dịch C++20. Ví dụ Windows x64 dùng Visual Studio 2022 C++ Build Tools. Ghi đầu ra build, kiểm thử và cài đặt vào thư mục mới bên ngoài mọi checkout và thư mục Git.
 
+Đặt CIRNET_LOCAL_STORAGE_ROOT và chọn bộ cấp phát Node Contracts đã review trong $allocator. Giữ phiên khi lặp build với cùng worktree, trình biên dịch, bộ sinh, kiến trúc và cấu hình.
+
 ~~~powershell
-$output = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid())
-New-Item -ItemType Directory -Path $output | Out-Null
+$env:CIRNET_ARTIFACTS_SESSION = node $allocator
+if ($LASTEXITCODE) { throw 'Could not allocate a Simulator artifact session.' }
+$output = $env:CIRNET_ARTIFACTS_SESSION
 cmake -S . -B "$output/build" -G 'Visual Studio 17 2022' -A x64
 cmake --build "$output/build" --config Release
 cmake --install "$output/build" --config Release --prefix "$output/install"

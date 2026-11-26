@@ -4,9 +4,12 @@
 
 Use CMake 3.21 or newer and a C++20 compiler. This Windows x64 example uses Visual Studio 2022 C++ Build Tools. Write build, test and install outputs into a fresh directory outside all checkouts and Git directories.
 
+Set CIRNET_LOCAL_STORAGE_ROOT and select the reviewed Contracts Node allocator in $allocator. Keep the same session for repeated builds with the same worktree, compiler, generator, architecture and configuration.
+
 ~~~powershell
-$output = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid())
-New-Item -ItemType Directory -Path $output | Out-Null
+$env:CIRNET_ARTIFACTS_SESSION = node $allocator
+if ($LASTEXITCODE) { throw 'Could not allocate a Simulator artifact session.' }
+$output = $env:CIRNET_ARTIFACTS_SESSION
 cmake -S . -B "$output/build" -G 'Visual Studio 17 2022' -A x64
 cmake --build "$output/build" --config Release
 cmake --install "$output/build" --config Release --prefix "$output/install"
