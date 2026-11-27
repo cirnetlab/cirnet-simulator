@@ -4,4 +4,4 @@
 
 - [Thực thi backend và CNP1/CNP2](architecture/backends.md)
 - [Build và kiểm chứng](contributing/verification.md)
-- [Nhật ký phát triển](../changelogs/README.md)
+- [Nhật ký phát triển](../../CHANGELOG.md)

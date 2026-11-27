@@ -1,5 +1,7 @@
 # CIRNET Simulator
 
+[Changelog](CHANGELOG.md)
+
 C++20 worker for deterministic digital simulation and bounded DC. Hardware supervises it over CNP1/CNP2.
 
 [Documentation](docs/en/index.md) · [Tài liệu tiếng Việt](docs/vi/index.md)

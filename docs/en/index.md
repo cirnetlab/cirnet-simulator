@@ -4,4 +4,4 @@
 
 - [Backend execution and CNP1/CNP2](architecture/backends.md)
 - [Build and verification](contributing/verification.md)
-- [Development changelog](../changelogs/README.md)
+- [Development changelog](../../CHANGELOG.md)
